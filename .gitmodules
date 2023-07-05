@@ -1,0 +1,15 @@
+[submodule "rekuest-server"]
+	path = rekuest-server
+	url = https://github.com/jhnnsrs/rekuest-server
+[submodule "mikro-server"]
+	path = mikro-server
+	url = https://github.com/jhnnsrs/mikro-server
+[submodule "port-server"]
+	path = port-server
+	url = https://github.com/jhnnsrs/port-server
+[submodule "fluss-server"]
+	path = fluss-server
+	url = https://github.com/jhnnsrs/fluss-server
+[submodule "lok-server"]
+	path = lok-server
+	url = https://github.com/jhnnsrs/lok-server
