@@ -1,0 +1,46 @@
+buckets:
+  - name: flussmedia
+  - name: lokmedia
+  - name: lokmedia
+  - name: lokmedia
+  - name: zarr
+  - name: parquet
+  - name: mikromedia
+  - name: lokmedia
+  - name: portmedia
+users:
+  - access_key: lumpychestnutseahorse
+    name: fluss
+    policies:
+      - readwrite
+    secret_key: 828b8c085eccea028878b7a14a18b6d9
+  - access_key: nippygoldenrodbudgerigar
+    name: lok
+    policies:
+      - readwrite
+    secret_key: 4d6b5930160ec5dcee5288fc3bbc7952
+  - access_key: greasyblackemu
+    name: lok
+    policies:
+      - readwrite
+    secret_key: 20666697e75b7ea676d688912bafa1f7
+  - access_key: stealthysmaltowl
+    name: lok
+    policies:
+      - readwrite
+    secret_key: aa313860ee5a19633f442d2f4789282b
+  - access_key: thirstyplatinumkudu
+    name: mikro
+    policies:
+      - readwrite
+    secret_key: 9c4d8a63a6c86657bab06e8d92c71ad1
+  - access_key: squeakytomatochicken
+    name: lok
+    policies:
+      - readwrite
+    secret_key: 2fb2a522172663d2a2a9d34d9256c3ac
+  - access_key: fsdfsefsefsefsefsefse
+    name: port
+    policies:
+      - readwrite
+    secret_key: fsdfsdfsfesefesef

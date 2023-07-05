@@ -1,0 +1,29 @@
+db:
+  db_name: rekuest_db
+  engine: django.db.backends.postgresql
+  host: db
+  password: c00f399c94e5d1d0e2d53226a4f384cd
+  port: 5432
+  username: zippyolivebutterfly
+django:
+  admin:
+    email: admin@admin.com
+    password: admin
+    username: admin
+  debug: false
+  hosts:
+    - "*"
+  secret_key: 9x0gxnss*hys8c+jm!cjb$z6@ru$bkxks82l&az9!ij9tjtl0f
+lok:
+  issuer: lok
+  key_type: RS256
+  public_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDGFj0zB7j6KrTRFEP+a2Z7toLEwJ0ROF3qSkq6vo2aK5TGRv+D3V/6VhvM2NgtUIO1iqwvf4XETamhHt2xlVzJyoyMAnAGkwkMyQJpI6wG5g7NtrRc1kkeefWbLBVW+aEI++3ec3eD9PUhnjXbQXJwju8l2ldKg2skw2fZWrjfWo0S0CuvB05nXJ8BmmAo65BBv29gGVywzZEApv/Zu16l6ftCZSEKi/zMbK6YxCekl/h3sfK7uGj6uaab7XSqqANHDZDTSotD5ws8UdMb3IP4/qoJiJm0Lsw5XpmFTt9M+ekiv/9HsWjXtzOd0BpqxynlvF1fWDr0HVnrUCh1XMzn
+rabbitmq:
+  host: rabbitmq
+  password: guest
+  port: 5672
+  username: guest
+  v_host: ""
+redis:
+  host: redis
+  port: 6379

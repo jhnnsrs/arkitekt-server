@@ -1,0 +1,163 @@
+# THis is the main docker compose configuration for the development environment
+# It is used to start all the services that are needed for development and
+# extends a base konstruktor configuration with additional dev mounts and the
+# correct start commands
+version: '3.7'
+
+
+services:
+  db:
+    environment:
+      POSTGRES_MULTIPLE_DATABASES: port_db, mikro_db, lok_db, rekuest_db, fluss_db
+      POSTGRES_PASSWORD: c00f399c94e5d1d0e2d53226a4f384cd # this is the password for the postgres and needs to be the same as in the config for each service
+      POSTGRES_USER: zippyolivebutterfly # this is the user for the postgres and needs to be the same as in the config for each service
+    image: jhnnsrs/daten:prod
+    labels:
+      - "arkitekt.default.service=db"
+  fluss:
+    depends_on:
+    - redis
+    - db
+    image: jhnnsrs/fluss:prod
+    ports:
+    - 8070:8070
+    volumes:
+    - ./fluss-server:/workspace # this is the mount for the fluss server code
+    - ./configs/fluss.yaml:/workspace/config.yaml # this is the mount for the fluss config
+    labels:
+      - "arkitekt.default.service=fluss"
+      - "traefik.enable=true"
+      - "traefik.http.routers.fluss.rule=Host(`fluss.lvh.me`)"
+      - "traefik.http.services.fluss.loadbalancer.server.port=8070"
+  initc: # A startup service , that creates the buckets for the minio service if they do not exist yet (according to config)
+    depends_on:
+      minio:
+        condition: service_started
+    environment:
+      MINIO_HOST: http://minio:9000
+      MINIO_ROOT_PASSWORD: e8821a29d189789e39c9922a3bfcfb4a # Same as in minio service
+      MINIO_ROOT_USER: crappygreysetter # Same as in minio service
+    image: jhnnsrs/init:prod
+    volumes:
+    - ./configs/minio.yaml:/workspace/config.yaml
+  lok:
+    depends_on:
+    - redis
+    - db
+    image: jhnnsrs/lok:prod
+    command: bash run-debug.sh
+    ports:
+    - 8000:8000
+    volumes:
+    - ./herre-server:/workspace
+    - ./configs/lok.yaml:/workspace/config.yaml
+    - ./fakts:/workspace/fakts
+    labels:
+      - "arkitekt.default.service=lok"
+      - "traefik.enable=true"
+      - "traefik.http.routers.herre.entrypoints=websecure"
+      - "traefik.http.routers.herre.rule=Host(`jhnnsrs-server.hyena-sole.ts.net`)"
+      - "traefik.http.services.herre.loadbalancer.server.port=8000"
+      - "traefik.http.routers.herre.tls.certresolver=myresolver"
+  mikro:
+    depends_on:
+    - redis
+    - db
+    - minio
+    image: jhnnsrs/mikro:prod
+    command: bash run-debug.sh
+    ports:
+    - 8080:8080
+    volumes:
+    - ./mikro-server:/workspace
+    - ./configs/mikro.yaml:/workspace/config.yaml
+    labels:
+      - "arkitekt.default.service=mikro"
+      - "traefik.enable=true"
+      - "traefik.http.routers.mikro.entrypoints=mikrosecure"
+      - "traefik.http.routers.mikro.rule=Host(`jhnnsrs-server.hyena-sole.ts.net`)"
+      - "traefik.http.services.mikro.loadbalancer.server.port=8080"
+      - "traefik.http.routers.mikro.tls.certresolver=myresolver"
+  minio:
+    command: server /data  --console-address ":9001" 
+    environment:
+      MINIO_ROOT_PASSWORD: e8821a29d189789e39c9922a3bfcfb4a
+      MINIO_ROOT_USER: crappygreysetter
+    image: minio/minio:RELEASE.2023-02-10T18-48-39Z # official minio image
+    ports:
+    - 9000:9000
+    - 9001:9001
+    volumes:
+    - ./data:/data # The data mount for minio
+    labels:
+      - "arkitekt.default.service=s3"
+  port:
+    depends_on:
+    - lok
+    - db
+    - redis
+    image: jhnnsrs/port:prod
+    command: bash run-debug.sh
+    ports:
+    - 8050:8050
+    volumes:
+      - ./port-server:/workspace
+      - ./configs/port.yaml:/workspace/config.yaml
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      - "arkitekt.default.service=port"
+      - "traefik.enable=true"
+      - "traefik.http.routers.myport.rule=Host(`port.lvh.me`)"
+      - "traefik.http.services.myport.loadbalancer.server.port=8050"
+  rabbitmq:
+    command: rabbitmq-server
+    image: jhnnsrs/mister:fancy # rabbitmq image with management plugin
+    labels:
+      - "arkitekt.default.service=rabbitmq"
+  redis:
+    image: redis:latest # official redis image
+    labels:
+      - "arkitekt.default.service=redis"
+  rekuest:
+    depends_on:
+    - redis
+    - db
+    - rabbitmq
+    image: jhnnsrs/rekuest:prod 
+    command: bash run-debug.sh
+    ports:
+    - 8090:8090
+    volumes:
+    - ./rekuest-server:/workspace
+    - ./configs/rekuest.yaml:/workspace/config.yaml
+    labels:
+    - "arkitekt.default.service=rekuest"
+    - "traefik.enable=true"
+    - "traefik.http.routers.rekuest.rule=Host(`rekuest.lvh.me`)"
+    - "traefik.http.services.rekuest.loadbalancer.server.port=8090"
+  traefik: # Traefik is the reverse proxy that routes all the requests to the correct service if the host matches
+    image: "traefik:v3.0"
+    container_name: "traefik"
+    command:
+      #- "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--certificatesresolvers.myresolver.tailscale=true"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.mikrosecure.address=:8081"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8081:8081"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "/var/run/tailscale/tailscaled.sock:/var/run/tailscale/tailscaled.sock"
+    labels:
+      - "arkitekt.default.service=traefik"
+
+
+networks:
+  default:
+    external:
+      name: dev

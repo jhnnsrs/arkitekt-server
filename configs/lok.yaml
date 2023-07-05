@@ -1,0 +1,271 @@
+activation_days: 7
+apps:
+  - client_id: soinfosienfoisnseghsggegefoisneofinsef
+    client_secret: soinfosienesfseffoisnefoisneofinsef
+    client_type: public
+    grant_type: authorization-code
+    identifier: github.io.jhnnsrs.mikroj
+    name: MikroJ
+    redirect_uris:
+      - http://localhost:8090
+    scopes:
+      - read
+      - write
+    tenant: johannes
+    token: 293j40239j4023023n09nw30d9n203nf03f
+    version: latest
+  - client_id: gdrgdhgnjsdfsefs
+    client_secret: soinfosienesfseff3298zhiub9328ruoisnefoisneofinsef
+    client_type: public
+    grant_type: authorization-code
+    identifier: github.io.jhnnsrs.arkitekt
+    name: Arkitekt Test Client
+    redirect_uris:
+      - http://localhost:5634
+      - http://localhost:5634/callback
+    scopes:
+      - read
+      - write
+    tenant: johannes
+    version: latest
+    token: 293j40239j4023023n09nj09n49nin3w30d9n203nf03f
+  - client_id: snfoinosinefsef
+    client_secret: 9noinfpuisenfpsiuenfpiosenfiusef
+    client_type: public
+    grant_type: authorization-code
+    identifier: github.io.jhnnsrs.orkestrator
+    name: orkestrator
+    redirect_uris:
+      - http://localhost:8090
+      - http://localhost:6789/callback
+      - http://localhost:6789
+      - http://localhost:7890/callback
+      - http://localhost:7890
+      - http://10.144.196.141:6789/callback
+      - http://10.144.196.141:6789
+      - http://100.91.169.37:6789
+      - http://100.91.169.37:6789/callback
+      - http://jhnnsrs-server:6789/callback
+      - http://jhnnsrs-server:6789/callback
+    scopes:
+      - read
+      - write
+    tenant: johannes
+    version: latest
+    token: 293j40239j4023023n039j309n309n3093n09nw30d9n203nf03f
+  - client_id: soinfosienfsfosefghsegfisnefoisneofinsef
+    client_secret: soinfoefsefssdfienfoisnefoisneofinsef
+    client_type: public
+    grant_type: authorization-code
+    identifier: github.io.jhnnsrs.doks
+    name: doks
+    redirect_uris:
+      - http://localhost:3000
+      - http://localhost:3000/callback
+      - http://localhost:3000/doks/callback
+    scopes:
+      - read
+      - write
+    tenant: johannes
+    version: latest
+    token: 293j40239j4023023n09nw3oinfinoifnsoifnosineoifnsef0d9n203nf03f
+  - client_id: mylittlefakts
+    client_secret: mylittlefaktssecret
+    client_type: public
+    grant_type: authorization-code
+    identifier: github.io.jhnnsrs.fakts
+    name: fakts
+    redirect_uris:
+      - http://localhost:3456
+      - http://localhost:3456/callback
+    scopes:
+      - read
+      - write
+    tenant: johannes
+    version: latest
+    token: 09j039j4r09n3409in09n09n0909209n409n09n3093n3
+  - client_id: soinfosienfoaswdasdasdisnefoisneofinsef
+    client_secret: soinfosiengeesegegfoisnefoisneofinsef
+    client_type: public
+    grant_type: authorization-code
+    identifier: github.io.jhnnsrs.mikromanager
+    name: MikroManager
+    redirect_uris:
+      - http://localhost:8090
+    scopes:
+      - read
+      - write
+    tenant: johannes
+    version: latest
+    token: 304n03940p39m4f09o304fo9m0394mf039n4f039n4f093n4f
+  - client_id: soinfosienfoissgsegsegtbsynefoisneofinsef
+    client_secret: soinfosienfoissdfsdfnefoisneofinsef
+    client_type: public
+    grant_type: authorization-code
+    identifier: github.io.jhnnsrs.mikro-napari
+    name: napari
+    redirect_uris:
+      - http://localhost:6767/
+      - http://localhost:6767
+    scopes:
+      - read
+      - write
+    tenant: johannes
+    version: latest
+    token: 093j4093n4f09m3094mf09m309mf09mf094n09enf09n23
+  - client_id: sdfsfshrhsdbse4gsrgs4rgdrgsrdgedrg
+    client_secret: ffesefnoweirnw9oinr0wnrosienfoin
+    client_type: public
+    grant_type: authorization-code
+    identifier: github.io.jhnnsrs.mikroj
+    name: mikroj
+    redirect_uris:
+      - http://localhost:6767/
+      - http://localhost:6767
+    scopes:
+      - read
+    tenant: johannes
+    version: v0.0.1
+    token: 0394mr039m4f093m40f90934nf09n309m2039d029n3f092n3f0293fn
+  - client_id: fsefgsdfoina9oiwendaosinaswdaw
+    client_secret: ffesefnoweirnw9fesoienfspieounfspoeinoinr0wnrosienfoin
+    client_type: public
+    grant_type: authorization-code
+    identifier: github.io.jhnnsrs.gucker
+    name: gucker
+    redirect_uris:
+      - http://localhost:6767/
+      - http://localhost:6767
+    scopes:
+      - read
+    tenant: johannes
+    version: latest
+    token: 2039rn0293md02m3f0pm2p30omr02oin3f0ß92m30f9n2039fn2039fn
+  - client_id: 09j09sn09nf0s9ne0f9ns09enf0s9enfsef
+    client_secret: 09049n0ne0fsinme0n309n2039n4029340293m0293m0293f
+    client_type: private
+    grant_type: client-credentials
+    identifier: github.io.jhnnsrs.reaktor
+    name: gucker
+    scopes:
+      - read
+    tenant: johannes
+    version: latest
+    token: sf09js09e0f9se0f9ns0e9nfsef
+
+db:
+  db_name: lok_db
+  engine: django.db.backends.postgresql
+  host: db
+  password: c00f399c94e5d1d0e2d53226a4f384cd
+  port: 5432
+  username: zippyolivebutterfly
+deployment:
+  name: Default
+django:
+  admin:
+    email: admin@admin.com
+    password: admin
+    username: admin
+  debug: false
+  hosts:
+    - "*"
+  secret_key: hbw#p&c(t-ced*$cs@r_0#is0@v-0(xeu&lf$ao#cc4bd+x&qq
+groups:
+  - description: My Perfect Team
+    name: My Perfect Team
+minio:
+  access_key: squeakytomatochicken
+  buckets:
+    - name: lokmedia
+  host: minio
+  port: "9000"
+  protocol: http
+  secret_key: 2fb2a522172663d2a2a9d34d9256c3ac
+private_key: "-----BEGIN PRIVATE KEY-----
+
+  MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDGFj0zB7j6KrTR
+
+  FEP+a2Z7toLEwJ0ROF3qSkq6vo2aK5TGRv+D3V/6VhvM2NgtUIO1iqwvf4XETamh
+
+  Ht2xlVzJyoyMAnAGkwkMyQJpI6wG5g7NtrRc1kkeefWbLBVW+aEI++3ec3eD9PUh
+
+  njXbQXJwju8l2ldKg2skw2fZWrjfWo0S0CuvB05nXJ8BmmAo65BBv29gGVywzZEA
+
+  pv/Zu16l6ftCZSEKi/zMbK6YxCekl/h3sfK7uGj6uaab7XSqqANHDZDTSotD5ws8
+
+  UdMb3IP4/qoJiJm0Lsw5XpmFTt9M+ekiv/9HsWjXtzOd0BpqxynlvF1fWDr0HVnr
+
+  UCh1XMznAgMBAAECggEAPz/OnsKyf76vKats4onsmUf3jVdrT5pN8odyQRqjID0W
+
+  LhFxeOtwwABKtCfxLtbsl0UGIcx4K+wYY8f1RcTJce1o3zPQDWlZlGmCiYvIXBON
+
+  WoYiJRqPEloi4D89OR5QGwxGMadw3AOVWfyoea/2GJarKc0D3lkEFyMFv9NGAJrb
+
+  bb6/e2zf4WQ+6slUW4N1djZW2q5JtZR4a4v6nW9K4laC0UgOAzlKcfgfNuym3dcL
+
+  c+VuUUWxIsF5QNKtcgOzjxekmT5axZugFFjedLo65qGzKw08Fwk5b3x2BR1DzCVr
+
+  /fl+O4DSjwsu4u72fFGex4XqnIF9ovpOmLvnP09skQKBgQDhwJW/xTa1cgayFTK2
+
+  dhGwbjTHOchfl7ZRfBBa9SXEYiV/69Qn+kLLwKYQ/Zk1LBBy4wcDcO32mLi3ZYxa
+
+  IWjPp+9tGIY3uo4gZNYPQt1Vbpndkrh+uo5arTEG2YW5AW7/q/ujw50L3SfE3AMs
+
+  CN8FM4B9SdQP7xLElm0G856A8wKBgQDgoLd7kfksLI53IDkvjFeM3Lgg1XA6fN2g
+
+  wBAx7ckBFI2jAIEs/eUmPZWFIEuWwwhyrjmf6XwZEnpXJTRGyeyOiCcfb9x5qCWK
+
+  RSh+UR9JirRYCkWIqHo+mSWaSRgLiQOCSxMwLCGycbfzfXDq0avqjFmmdW0kh7if
+
+  npnHTlRhPQKBgHAvfDtojd9tYtZsol76HaBHpAK9PE4E3p1vwdDxsmr9OxVu5GdZ
+
+  fogynFQlMlWyKBpvp7SWEitRibnZxP2lTKilE95rKYfYNXjzo0zCNauW4u+xUe3o
+
+  V4XIO2zj/AgMJlT36n1fYFPc+z5g91KStgGnrlqUrcWdUP5Qoq2ps0LxAoGAfmVQ
+
+  +YJpEBc+Tv/dzciNlyC3pxoS3YZXe1W3hzDC8w2qqTbmePeg0oTCtrc2cW3rOgSZ
+
+  Pkc2YjFIj/LKWK7UolswkHr0N6yK+yPxJirljQ80bXnSKJSMvN6WDxvkINGHHPC7
+
+  qlaa23srxCIowKkcsI0rAQSAVpbcJ00qQMDtsA0CgYEAuCw+oo9G/OIiNtGcmee+
+
+  6OB/jQB42ZMJD6RTCzTRsjAwGvN+nlkCEIyT+1A4Th4cdmrvxm6eeLABZ85VfHrZ
+
+  T8Xz5BnVAhN5QjOvielXW79b87jLun3i7CaMnsA1SGgnDdkBPpJvOe1tyCmZiN3A
+
+  X95jwe+hRAc3nA1/yc55ais=
+
+  -----END PRIVATE KEY-----
+
+  "
+public_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDGFj0zB7j6KrTRFEP+a2Z7toLEwJ0ROF3qSkq6vo2aK5TGRv+D3V/6VhvM2NgtUIO1iqwvf4XETamhHt2xlVzJyoyMAnAGkwkMyQJpI6wG5g7NtrRc1kkeefWbLBVW+aEI++3ec3eD9PUhnjXbQXJwju8l2ldKg2skw2fZWrjfWo0S0CuvB05nXJ8BmmAo65BBv29gGVywzZEApv/Zu16l6ftCZSEKi/zMbK6YxCekl/h3sfK7uGj6uaab7XSqqANHDZDTSotD5ws8UdMb3IP4/qoJiJm0Lsw5XpmFTt9M+ekiv/9HsWjXtzOd0BpqxynlvF1fWDr0HVnrUCh1XMzn
+redis:
+  host: redis
+  port: 6379
+scopes:
+  can_assign: Can Assign Nodes
+  can_create: Can Create Nodes
+  can_create_identifier: Can create new identifier for the platform
+  can_forward_bounce:
+    Can reserve and assign to Nodes mimicking other Users (only
+    backend and admin)
+  can_provide: Can Provide Nodes
+  can_template: Can Template Nodes
+  introspection: Introspect the Token scope
+  provider: Can act as a provider
+  read: Reading all of your Data
+  write: Writing to all of your Data
+  read_starred: Reading all of your shared Data
+token_expire_seconds: 604800
+users:
+  - email: johannes@gmail.com
+    groups:
+      - My Perfect Team
+    password: johannes
+    username: johannes
+  - email: thierno@gmail.com
+    groups:
+      - My Perfect Team
+    password: thierno
+    username: thierno
