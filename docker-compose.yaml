@@ -49,7 +49,7 @@ services:
     ports:
     - 8000:8000
     volumes:
-    - ./herre-server:/workspace
+    - ./lok-server:/workspace
     - ./configs/lok.yaml:/workspace/config.yaml
     - ./fakts:/workspace/fakts
     labels:
