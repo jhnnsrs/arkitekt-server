@@ -13,3 +13,6 @@
 [submodule "lok-server"]
 	path = lok-server
 	url = https://github.com/jhnnsrs/lok-server
+[submodule "init-server"]
+	path = init-server
+	url = https://github.com/jhnnsrs/init-server
