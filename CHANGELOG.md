@@ -1,7 +1,15 @@
 # CHANGELOG
 
 
+## v0.1.2 (2025-07-04)
+
+
 ## v0.1.1 (2025-07-04)
+
+### Bug Fixes
+
+- Fix weird releases
+  ([`4031f82`](https://github.com/arkitektio/arkitekt-server/commit/4031f82613c114d4ed9bbce4df2f45081e97a7dd))
 
 
 ## v0.1.0 (2025-07-04)
