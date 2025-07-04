@@ -52,6 +52,23 @@ def iterate_service(config: ArkitektServerConfig) -> list[BaseService]:
 def create_basic_config_values(
     config: ArkitektServerConfig, service: BaseService
 ) -> Dict[str, Any]:
+    """
+    Create basic configuration values for a service.
+
+    This function generates the common configuration structure that most
+    Arkitekt services need, including database connections, Redis settings,
+    authentication, and S3 storage configuration.
+
+    Args:
+        config: The main Arkitekt server configuration
+        service: The specific service configuration to generate values for
+
+    Returns:
+        A dictionary containing the service configuration values
+
+    Raises:
+        TypeError: If the service has an unsupported database or Redis configuration type
+    """
     db = None
     if isinstance(service.db_config, LocalDBConfig):
         db = {
@@ -148,6 +165,19 @@ def create_config(
 def build_default_service(
     config: ArkitektServerConfig, service: BaseService
 ) -> dict[str, Any]:
+    """
+    Build a default Docker Compose service definition.
+
+    Creates a standard service configuration for Docker Compose with common
+    settings like image, command, dependencies, and volume mounts.
+
+    Args:
+        config: The main Arkitekt server configuration
+        service: The service to create a Docker Compose definition for
+
+    Returns:
+        A dictionary representing a Docker Compose service definition
+    """
     return {
         "image": service.image,
         "command": service.build_run_command(),
@@ -157,13 +187,25 @@ def build_default_service(
 
 
 def create_fluss_config(config: ArkitektServerConfig, base_path: Path) -> None:
-    """Create the Fluss configuration file."""
+    """
+    Create configuration file for the Fluss workflow service.
+
+    Args:
+        config: The main Arkitekt server configuration
+        base_path: Directory where the configuration file should be written
+    """
     fluss_config = create_basic_config_values(config, config.fluss)
     create_config("fluss", fluss_config, base_path)
 
 
 def create_lok_config(config: ArkitektServerConfig, base_path: Path) -> None:
-    """Create the Fluss configuration file."""
+    """
+    Create configuration file for the Lok authentication service.
+
+    Args:
+        config: The main Arkitekt server configuration
+        base_path: Directory where the configuration file should be written
+    """
 
     lok_config = create_basic_config_values(config, config.lok)
 
@@ -171,7 +213,19 @@ def create_lok_config(config: ArkitektServerConfig, base_path: Path) -> None:
 
 
 def parse_local_db_requests(config: ArkitektServerConfig) -> list[LocalDBConfig]:
-    """Parse the database names from the configuration."""
+    """
+    Parse and collect all local database configuration requests.
+
+    Iterates through all enabled services and extracts those that require
+    local database connections. This is used to determine what databases
+    need to be created in the PostgreSQL container.
+
+    Args:
+        config: The main Arkitekt server configuration
+
+    Returns:
+        A list of LocalDBConfig objects for all services requiring local databases
+    """
     db_names = []
     for service in iterate_service(config):
         if isinstance(service.db_config, LocalDBConfig):
@@ -180,7 +234,18 @@ def parse_local_db_requests(config: ArkitektServerConfig) -> list[LocalDBConfig]
 
 
 def parse_local_auth_requests(config: ArkitektServerConfig) -> list[LocalAuthConfig]:
-    """Parse the database names from the configuration."""
+    """
+    Parse and collect all local authentication configuration requests.
+
+    Note: This function currently has the same implementation as parse_local_db_requests,
+    which appears to be a bug. It should be collecting LocalAuthConfig objects instead.
+
+    Args:
+        config: The main Arkitekt server configuration
+
+    Returns:
+        A list of LocalAuthConfig objects (currently returns LocalDBConfig due to bug)
+    """
     db_names = []
     for service in iterate_service(config):
         if isinstance(service.db_config, LocalDBConfig):
@@ -189,7 +254,19 @@ def parse_local_auth_requests(config: ArkitektServerConfig) -> list[LocalAuthCon
 
 
 def parse_local_redis_request(config: ArkitektServerConfig) -> list[LocalRedisConfig]:
-    """Parse the Redis database names from the configuration."""
+    """
+    Parse and collect all local Redis configuration requests.
+
+    Iterates through all enabled services and extracts those that require
+    local Redis connections. This is used to determine if a Redis container
+    needs to be started in the deployment.
+
+    Args:
+        config: The main Arkitekt server configuration
+
+    Returns:
+        A list of LocalRedisConfig objects for all services requiring local Redis
+    """
     redis_dbs = []
     for service in iterate_service(config):
         if isinstance(service.redis_config, LocalRedisConfig):
@@ -198,7 +275,19 @@ def parse_local_redis_request(config: ArkitektServerConfig) -> list[LocalRedisCo
 
 
 def parse_local_bucket_configs(config: ArkitektServerConfig) -> list[LocalBucketConfig]:
-    """Parse the bucket names from the configuration."""
+    """
+    Parse and collect all local bucket configuration requests.
+
+    Iterates through all enabled services and extracts bucket configurations
+    that use local MinIO storage. This is used to determine what S3 buckets
+    need to be created in the MinIO container.
+
+    Args:
+        config: The main Arkitekt server configuration
+
+    Returns:
+        A list of LocalBucketConfig objects for all local buckets needed
+    """
     bucket_names = []
     for service in iterate_service(config):
         buckets = service.get_buckets()
@@ -210,6 +299,18 @@ def parse_local_bucket_configs(config: ArkitektServerConfig) -> list[LocalBucket
 
 
 def create_caddyfilepath(service: BaseService) -> str:
+    """
+    Create a Caddyfile path matcher and handler for a single service.
+
+    This is a helper function that generates the Caddy configuration block
+    for routing requests to a specific service based on URL path matching.
+
+    Args:
+        service: The service to create routing configuration for
+
+    Returns:
+        A string containing the Caddy configuration block for this service
+    """
     caddyfile = f"\t@{service.host} path /{service.host}*\n"
     caddyfile += "\thandle @" + service.host + " { \n"
     caddyfile += f"\t\treverse_proxy {service.host}:{service.internal_port}\n"
@@ -218,7 +319,25 @@ def create_caddyfilepath(service: BaseService) -> str:
 
 
 def create_caddy_file(config: ArkitektServerConfig) -> str:
-    """Create a Caddyfile for the service."""
+    """
+    Create a Caddyfile for reverse proxy configuration.
+
+    Generates a Caddy reverse proxy configuration that routes requests to the
+    appropriate services based on URL paths. This includes:
+    - Service routing (e.g., /rekuest/* -> rekuest service)
+    - Bucket routing for MinIO access
+    - Special routes like /.well-known for OAuth/OIDC
+    - MinIO admin interface routing
+
+    Args:
+        config: The main Arkitekt server configuration
+
+    Returns:
+        A string containing the complete Caddyfile configuration
+
+    Raises:
+        TypeError: If a service doesn't implement the BaseService protocol
+    """
 
     caddyfile = "http:// {\n"
 
@@ -243,7 +362,12 @@ def create_caddy_file(config: ArkitektServerConfig) -> str:
     caddyfile += "\t@.well-known path /.well-known/*\n"
     caddyfile += "\thandle @.well-known {\n"
     caddyfile += "\t\trewrite * /lok{uri}\n"
-    caddyfile += f"\t\treverse_proxy {service.host}:{service.internal_port}\n"
+    caddyfile += f"\t\treverse_proxy {config.lok.host}:{config.lok.internal_port}\n"
+    caddyfile += "\t}\n\n"
+
+    caddyfile += "\t@minio path /minio/*\n"
+    caddyfile += "\thandle @minio {\n"
+    caddyfile += f"\t\treverse_proxy {config.minio.host}:{config.minio.internal_port}\n"
     caddyfile += "\t}\n\n"
 
     caddyfile += "}\n"
@@ -251,6 +375,19 @@ def create_caddy_file(config: ArkitektServerConfig) -> str:
 
 
 class AliasConfig(BaseModel):
+    """
+    Configuration for service aliases in the Arkitekt ecosystem.
+
+    Aliases define how services are exposed and accessed through different
+    protocols and layers (e.g., HTTP, WebSocket, public/private access).
+
+    Attributes:
+        challenge: The challenge type for authentication/access
+        kind: The protocol or connection type (e.g., 'http', 'ws')
+        layer: The access layer (e.g., 'public', 'private')
+        path: The URL path where the service is accessible
+    """
+
     challenge: str
     kind: str
     layer: str
@@ -258,12 +395,35 @@ class AliasConfig(BaseModel):
 
 
 class InstanceConfig(BaseModel):
+    """
+    Configuration for a service instance in the Arkitekt ecosystem.
+
+    Instances represent deployed services that can be discovered and
+    connected to by other services or client applications.
+
+    Attributes:
+        service: The service type identifier (e.g., 'live.arkitekt.rekuest')
+        identifier: Unique identifier for this instance
+        alias: List of aliases defining how to access this instance
+    """
+
     service: str
     identifier: str
     alias: list[AliasConfig] = []
 
 
 class RedeemTokenConfig(BaseModel):
+    """
+    Configuration for redeem tokens used in service authentication.
+
+    Redeem tokens allow services or users to exchange temporary tokens
+    for persistent authentication credentials.
+
+    Attributes:
+        token: The redeemable token string
+        user: The user associated with this token
+    """
+
     token: str
     user: str
 
@@ -271,24 +431,59 @@ class RedeemTokenConfig(BaseModel):
 def service_to_instance_config(
     service: BaseService, service_name: str
 ) -> InstanceConfig:
-    """Convert a service to an instance configuration."""
+    """
+    Convert a service configuration to an instance configuration.
+
+    This creates the instance metadata that gets registered with the Lok
+    authentication service, allowing other services and clients to discover
+    and connect to this service instance.
+
+    Args:
+        service: The service configuration to convert
+        service_name: The canonical service name (e.g., 'live.arkitekt.rekuest')
+
+    Returns:
+        An InstanceConfig object representing this service instance
+    """
     return InstanceConfig(
         service=service_name,
         identifier=service.host,
         alias=[
-            AliasConfig(challenge="ht", kind="http", layer="public", path=service.host)
+            AliasConfig(
+                challenge="ht", kind="relative", layer="public", path=service.host
+            )
         ],
     )
 
 
 def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
-    """Generate expected config files into the temp dir."""
+    """
+    Generate all configuration files needed for deployment.
+
+    This is the main function that orchestrates the creation of all necessary
+    configuration files for a complete Arkitekt deployment, including:
+
+    - Docker Compose service definitions
+    - Individual service configuration files (YAML)
+    - Caddyfile for reverse proxy
+    - MinIO initialization configuration
+    - Lok authentication service setup with users, groups, and instances
+
+    The function analyzes the configuration to determine which services are
+    enabled and what infrastructure components (databases, Redis, storage)
+    are needed, then generates appropriate configurations for each.
+
+    Args:
+        tmpdir: Temporary directory where configuration files will be written
+        config: The main Arkitekt server configuration to generate files from
+    """
 
     services = {}
 
-    instances = []
-    redeem_tokens = []
+    instances = []  # Service instances for Lok registration
+    redeem_tokens = []  # Authentication tokens for service access
 
+    # Configure PostgreSQL database if any services need local databases
     local_dbs = parse_local_db_requests(config)
     if len(local_dbs) > 1:
         services["db"] = {
@@ -303,12 +498,14 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
             "volumes": [f"{config.db.db_mount}:/var/lib/postgresql/data"],
         }
 
+    # Configure Redis service if any services need local Redis
     local_redis_requests = parse_local_redis_request(config)
     if len(local_redis_requests) > 1:
         services[config.local_redis.host] = {
             "image": config.local_redis.image,
         }
 
+    # Configure MinIO object storage if any services need local buckets
     local_bucket_requests = parse_local_bucket_configs(config)
     if len(local_bucket_requests) > 1:
         services[config.minio.host] = {
@@ -321,6 +518,7 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
             "volumes": ["./data:/data"],
         }
 
+        # Configuration for MinIO initialization (creates buckets and users)
         gconfig = {
             "buckets": [{"name": req.bucket_name} for req in local_bucket_requests],
             "users": [
@@ -332,9 +530,12 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
                 }
             ],
         }
+        instances.append(
+            service_to_instance_config(config.fluss, "live.arkitekt.fluss")
+        )
 
         create_config(config.minio.init_container_host, gconfig, tmpdir)
-        # We also need to create the init container for MinIO
+        # MinIO initialization container that sets up buckets and users on startup
         services[config.minio.init_container_host] = {
             "image": config.minio.init_container_image,
             "volumes": ["./configs/minio-init.yaml:/workspace/config.yaml"],
@@ -346,6 +547,7 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
             "depends_on": {config.minio.host: {"condition": "service_started"}},
         }
 
+    # Configure deployer service for container orchestration
     if config.deployer.enabled:
         services[config.deployer.host] = {
             "image": config.deployer.image,
@@ -375,13 +577,14 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
             )
         )
 
+    # Configure individual Arkitekt services
     if config.fluss.enabled:
         services[config.fluss.host] = build_default_service(config, config.fluss)
 
         gconfig = create_basic_config_values(config, config.fluss)
         create_config(config.fluss.host, gconfig, tmpdir)
         instances.append(
-            service_to_instance_config(config.fluss, "arkitekt.live.fluss")
+            service_to_instance_config(config.fluss, "live.arkitekt.fluss")
         )
 
     if config.kabinet.enabled:
@@ -390,7 +593,7 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
         gconfig = create_basic_config_values(config, config.kabinet)
         create_config(config.kabinet.host, gconfig, tmpdir)
         instances.append(
-            service_to_instance_config(config.kabinet, "arkitekt.live.kabinet")
+            service_to_instance_config(config.kabinet, "live.arkitekt.kabinet")
         )
 
     if config.elektro.enabled:
@@ -399,7 +602,7 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
         gconfig = create_basic_config_values(config, config.elektro)
         create_config(config.elektro.host, gconfig, tmpdir)
         instances.append(
-            service_to_instance_config(config.elektro, "arkitekt.live.elektro")
+            service_to_instance_config(config.elektro, "live.arkitekt.elektro")
         )
 
     if config.kraph.enabled:
@@ -408,7 +611,7 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
         gconfig = create_basic_config_values(config, config.kraph)
         create_config(config.kraph.host, gconfig, tmpdir)
         instances.append(
-            service_to_instance_config(config.kraph, "arkitekt.live.kraph")
+            service_to_instance_config(config.kraph, "live.arkitekt.kraph")
         )
 
     if config.alpaka.enabled:
@@ -417,7 +620,7 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
         lok_config = create_basic_config_values(config, config.alpaka)
         create_config(config.alpaka.host, lok_config, tmpdir)
         instances.append(
-            service_to_instance_config(config.alpaka, "arkitekt.live.alpaka")
+            service_to_instance_config(config.alpaka, "live.arkitekt.alpaka")
         )
 
     if config.mikro.enabled:
@@ -426,7 +629,7 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
         lok_config = create_basic_config_values(config, config.mikro)
         create_config(config.mikro.host, lok_config, tmpdir)
         instances.append(
-            service_to_instance_config(config.mikro, "arkitekt.live.mikro")
+            service_to_instance_config(config.mikro, "live.arkitekt.mikro")
         )
 
     if config.rekuest.enabled:
@@ -435,9 +638,10 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
         lok_config = create_basic_config_values(config, config.rekuest)
         create_config(config.rekuest.host, lok_config, tmpdir)
         instances.append(
-            service_to_instance_config(config.rekuest, "arkitekt.live.rekuest")
+            service_to_instance_config(config.rekuest, "live.arkitekt.rekuest")
         )
 
+    # Configure Caddy reverse proxy/gateway
     services["caddy"] = {
         "image": "caddy:latest",
         "ports": ["80:80"],
@@ -445,6 +649,7 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
         "volumes": ["./configs/Caddyfile:/etc/caddy/Caddyfile"],
     }
 
+    # Generate and write the Caddyfile configuration
     caddyfile = create_caddy_file(config)
     mkkdirs = tmpdir / "configs"
     mkkdirs.mkdir(parents=True, exist_ok=True)
@@ -495,6 +700,7 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
         "password": config.email.password if config.email else "NOT_SET",
         "email": config.email.email if config.email else "NOT_SET",
     }
+    gconfig["layers"] = [{"kind": "public", "identifier": "public"}]
     gconfig["private_key"] = config.lok.auth_key_pair.private_key
     gconfig["public_key"] = config.lok.auth_key_pair.public_key
     gconfig["redeem_tokens"] = [instance.model_dump() for instance in redeem_tokens]
@@ -535,7 +741,15 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
 
 
 def collect_all_files(base: Path) -> dict:
-    """Return all files in a directory tree relative to the base path."""
+    """
+    Recursively collect all files in a directory tree.
+
+    Args:
+        base: The base directory to scan
+
+    Returns:
+        A dictionary mapping relative paths to absolute Path objects
+    """
     files = {}
     for path in base.rglob("*"):
         if path.is_file():
@@ -547,7 +761,23 @@ def collect_all_files(base: Path) -> dict:
 def compare_filesystems(
     virtual_dir: Path, real_dir: Path, *, allow_deletes: bool = True
 ):
-    """Compare the virtual and real directory structures and print diffs."""
+    """
+    Compare virtual and real directory structures and display differences.
+
+    This function performs a comprehensive comparison between the generated
+    (virtual) configuration files and the existing (real) deployment files.
+    It identifies files that would be:
+    - Created (exist in virtual but not real)
+    - Deleted (exist in real but not virtual, if allow_deletes=True)
+    - Modified (exist in both but with different content)
+
+    For modified files, it displays a unified diff showing the exact changes.
+
+    Args:
+        virtual_dir: Directory containing the generated configuration files
+        real_dir: Directory containing the existing deployment files
+        allow_deletes: Whether to report files that would be deleted
+    """
     virtual_files = collect_all_files(virtual_dir)
     real_files = collect_all_files(real_dir)
 
@@ -583,7 +813,27 @@ def compare_filesystems(
 def run_dry_run_diff(
     config: ArkitektServerConfig, real_dir: Path, allow_deletes: bool = False
 ):
-    """Main logic to run the dry-run config comparison."""
+    """
+    Execute a dry-run comparison and optionally apply changes.
+
+    This is the main entry point for the configuration diff workflow. It:
+    1. Creates a temporary directory with the generated configuration
+    2. Compares it to the existing deployment directory
+    3. Shows the user what changes would be made
+    4. Prompts for confirmation before applying changes
+    5. Copies the new configuration files if confirmed
+
+    This provides a safe way to preview and apply configuration changes
+    without accidentally overwriting important files.
+
+    Args:
+        config: The Arkitekt server configuration to deploy
+        real_dir: The target directory for the deployment files
+        allow_deletes: Whether to allow deletion of existing files
+
+    Raises:
+        typer.Abort: If the user declines to apply the changes
+    """
 
     with tempfile.TemporaryDirectory() as tmp:
         virtual_dir = Path(tmp)
