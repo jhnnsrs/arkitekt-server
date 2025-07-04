@@ -391,7 +391,7 @@ class AliasConfig(BaseModel):
     challenge: str
     kind: str
     layer: str
-    path: str
+    path: str | None = None
 
 
 class InstanceConfig(BaseModel):
@@ -671,6 +671,20 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
             }
         },
     }
+
+    instances.append(service_to_instance_config(config.lok, "live.arkitekt.lok"))
+
+    instances.append(
+        InstanceConfig(
+            service="live.arkitekt.s3",
+            identifier=config.minio.host,
+            aliases=[
+                AliasConfig(
+                    challenge="minio/health/live", kind="relative", layer="public"
+                )
+            ],
+        )
+    )
 
     gconfig = create_basic_config_values(config, config.lok)
 
