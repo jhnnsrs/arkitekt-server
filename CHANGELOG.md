@@ -1,12 +1,18 @@
 # CHANGELOG
 
 
+## v0.1.4 (2025-07-04)
+
+
 ## v0.1.3 (2025-07-04)
 
 ### Bug Fixes
 
 - Fix minio
   ([`28420d4`](https://github.com/arkitektio/arkitekt-server/commit/28420d4ecf4e6a57c306b7f0705bb45491a85487))
+
+- Fix miniohost path
+  ([`64fa991`](https://github.com/arkitektio/arkitekt-server/commit/64fa99145df4a2dd428708fabbbf7f80957ee973))
 
 
 ## v0.1.2 (2025-07-04)
