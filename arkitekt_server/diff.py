@@ -538,7 +538,9 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
         # MinIO initialization container that sets up buckets and users on startup
         services[config.minio.init_container_host] = {
             "image": config.minio.init_container_image,
-            "volumes": ["./configs/minio-init.yaml:/workspace/config.yaml"],
+            "volumes": [
+                f"./configs/{config.minio.init_container_host}.yaml:/workspace/config.yaml"
+            ],
             "environment": {
                 "MINIO_ROOT_USER": config.minio.root_user,
                 "MINIO_ROOT_PASSWORD": config.minio.root_password,

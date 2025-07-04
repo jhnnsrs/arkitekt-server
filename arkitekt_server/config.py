@@ -18,6 +18,15 @@ def generate_django_secret_key():
     return "".join(secrets.choice(chars) for _ in range(50))
 
 
+def generate_alpha_numeric_string(length: int = 40) -> str:
+    """
+    Generate a random alphanumeric string of a given length.
+    This is used to create unique names for resources such as S3 buckets.
+    """
+    chars = "abcdefghijklmnopqrstuvwxyz0123456789"
+    return "".join(secrets.choice(chars) for _ in range(length))
+
+
 class KeyPair(BaseModel):
     key_type: Literal["RSA256"] = Field(
         default="RSA256",
@@ -415,18 +424,18 @@ class MinioConfig(BaseModel):
         default=9000, description="Internal port for the MinIO service"
     )
     access_key: str = Field(
-        default_factory=generate_django_secret_key,
+        default_factory=generate_alpha_numeric_string,
         description="Access key for the MinIO service",
     )
     secret_key: str = Field(
-        default_factory=generate_django_secret_key,
+        default_factory=generate_alpha_numeric_string,
         description="Secret key for the MinIO service",
     )
     root_user: str = Field(
         default_factory=generate_name, description="Root user for the MinIO service"
     )
     root_password: str = Field(
-        default_factory=generate_django_secret_key,
+        default_factory=generate_alpha_numeric_string,
         description="Root password for the MinIO service",
     )
     init_container_host: str = Field(
@@ -795,7 +804,7 @@ class User(BaseModel):
         description="Username for the user. If not provided, a random name will be generated",
     )
     password: str = Field(
-        default_factory=generate_django_secret_key,
+        default_factory=generate_alpha_numeric_string,
         description="Password for the user. If not provided, a random password will be generated",
     )
     email: str | None = Field(
