@@ -409,7 +409,7 @@ class InstanceConfig(BaseModel):
 
     service: str
     identifier: str
-    alias: list[AliasConfig] = []
+    aliases: list[AliasConfig] = []
 
 
 class RedeemTokenConfig(BaseModel):
@@ -448,7 +448,7 @@ def service_to_instance_config(
     return InstanceConfig(
         service=service_name,
         identifier=service.host,
-        alias=[
+        aliases=[
             AliasConfig(
                 challenge="ht", kind="relative", layer="public", path=service.host
             )
