@@ -525,7 +525,7 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
                 {
                     "access_key": config.minio.access_key,
                     "secret_key": config.minio.secret_key,
-                    "policy": "readwrite",
+                    "policies": ["readwrite"],
                     "name": "Default User",
                 }
             ],
@@ -544,7 +544,7 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
             "environment": {
                 "MINIO_ROOT_USER": config.minio.root_user,
                 "MINIO_ROOT_PASSWORD": config.minio.root_password,
-                "MINIO_HOST": config.minio.host,
+                "MINIO_HOST": f"http://{config.minio.host}:{config.minio.internal_port}",
             },
             "depends_on": {config.minio.host: {"condition": "service_started"}},
         }
