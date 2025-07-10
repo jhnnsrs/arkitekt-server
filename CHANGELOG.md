@@ -1,7 +1,15 @@
 # CHANGELOG
 
 
+## v0.2.0 (2025-07-10)
+
+
 ## v0.1.4 (2025-07-04)
+
+### Features
+
+- Add docker commands + admin inspect
+  ([`1840a2e`](https://github.com/arkitektio/arkitekt-server/commit/1840a2e707a722a4d63df2edfaa2d5167dbd870f))
 
 
 ## v0.1.3 (2025-07-04)
