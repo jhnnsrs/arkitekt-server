@@ -1,5 +1,6 @@
-from asyncio import subprocess
+import subprocess
 from pathlib import Path
+import sys
 import click
 from pydantic import BaseModel, Field
 import yaml
@@ -27,7 +28,15 @@ ASCI_LOGO = r"""
 """
 
 
-app = typer.Typer()
+app = typer.Typer(
+    rich_markup_mode="rich",
+    help="Arkitekt server CLI for managing your local Arkitekt server deployment.",
+)
+
+init_app = typer.Typer()
+app.add_typer(
+    init_app, name="init", help="Initialize an Arkitekt deployment configuration"
+)
 
 
 auth_app = typer.Typer()
@@ -36,9 +45,9 @@ app.add_typer(
 )
 
 
-init_app = typer.Typer()
+inspect_app = typer.Typer()
 app.add_typer(
-    init_app, name="init", help="Initialize an Arkitekt deployment configuration"
+    inspect_app, name="inspect", help="Inspect the Arkitekt server configuration"
 )
 
 
@@ -118,6 +127,32 @@ def load_yaml_file(file_path: str) -> ArkitektServerConfig:
         raise ValueError(f"Error parsing YAML file: {e}")
 
 
+def show_important_information(config: ArkitektServerConfig):
+    """Display important information about the configuration."""
+
+    print("Admin User:" + config.global_admin)
+    print("Admin Password: " + config.global_admin_password)
+
+
+@init_app.command()
+def stable():
+    """Build commands for Arkitekt server.
+
+    Creates a config that can be used to run the Arkitekt server.
+
+
+
+    """
+
+    # Create a default configuration file if it doesn't exist
+    config = ArkitektServerConfig()
+
+    print("Creating default configuration file for Arkitekt server...")
+    update_or_create_yaml_file("arkitekt_server_config.yaml", config)
+
+    # load the yaml file
+
+
 @init_app.command()
 def default():
     """Build commands for Arkitekt server.
@@ -161,6 +196,15 @@ def dev():
     update_or_create_yaml_file("arkitekt_server_config.yaml", config)
 
     # load the yaml file
+
+
+@inspect_app.command()
+def admin():
+    """Show the current Arkitekt addmin user configuration."""
+
+    config = load_or_create_yaml_file("arkitekt_server_config.yaml")
+
+    show_important_information(config)
 
 
 @init_app.command()
@@ -278,38 +322,50 @@ def kubernetes(path: Path = Path(".")):
 
 @app.command()
 def migrate():
-    """Migrate the Arkitekt server configuration."""
+    """Migrate your Arkiter server configuration to a new version"""
 
     # load the yaml file
     config = load_or_create_yaml_file("arkitekt_server_config.yaml")
 
     # Here you would typically perform migration tasks, such as updating the schema or data format.
     # For simplicity, we will just print the current configuration.
+    raise NotImplementedError(
+        "Migration is not implemented yet. Please update your configuration manually."
+    )
 
 
 @app.command()
-def update():
-    """Update the Arkitekt server configuration."""
-
-    # load the yaml file
-    config = load_or_create_yaml_file("arkitekt_server_config.yaml")
-
-    click.echo(f"Updating Arkitekt server with configuration: {config.json(indent=2)}")
-
-    # Here you would typically perform update tasks, such as applying patches or changes to the configuration.
-    # For simplicity, we will just print the current configuration.
-
-
-@app.command()
-def up():
-    """Start the Arkitekt server."""
+def start():
+    """Start the Arkitekt server (with Docker Compose)."""
 
     # load the yaml file
     config = load_yaml_file("arkitekt_server_config.yaml")
 
-    subprocess.run(["docker", "compose", "up", "-d"], check=True)
+    try:
+        subprocess.run(["docker", "compose", "up"], check=True)
+    except subprocess.CalledProcessError as e:
+        # Print the error message (this will show stderr live)
+        click.secho("❌ Failed to start docker compose:", fg="red", bold=True)
+        raise typer.Exit(code=e.returncode)
+
+
+@app.command()
+def update():
+    """Update the Arkitekt server by pulling the latest images."""
+
+    # load the yaml file
+    config = load_yaml_file("arkitekt_server_config.yaml")
+
+    try:
+        subprocess.run(["docker", "compose", "pull"], check=True)
+    except subprocess.CalledProcessError as e:
+        # Print the error message (this will show stderr live)
+        click.secho("❌ Failed to start docker compose:", fg="red", bold=True)
+        raise typer.Exit(code=e.returncode)
 
 
 def main():
+    if "--help" in sys.argv or len(sys.argv) == 1:
+        click.secho(ASCI_LOGO, fg="cyan", bold=True)
     """Main entry point for the Arkitekt server CLI."""
     app()
