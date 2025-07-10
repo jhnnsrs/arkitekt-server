@@ -1,4 +1,5 @@
 import difflib
+import secrets
 import tempfile
 from pathlib import Path
 from typing import Any, Dict
@@ -16,9 +17,6 @@ from .config import (
     LocalBucketConfig,
     LocalAuthConfig,
     RemoteRedisConfig,
-    StatikTokenAuthConfig,
-    LocalPath,
-    ForcePath,
 )
 import yaml
 
@@ -551,33 +549,33 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
 
     # Configure deployer service for container orchestration
     if config.deployer.enabled:
-        services[config.deployer.host] = {
-            "image": config.deployer.image,
-            "volumes": ["/var/run/docker.sock:/var/run/docker.sock"],
-            "command": (
-                f"arkitekt-next run prod --redeem-token={config.deployer.redeem_token} "
-                f"--url http://{config.gateway.host}:{config.gateway.internal_port}"
-            ),
-            "deploy": {
-                "restart_policy": {
-                    "condition": "on-failure",
-                    "delay": "10s",
-                    "max_attempts": 10,
-                    "window": "300s",
-                }
-            },
-            "environment": {
-                "ARKITEKT_GATEWAY": f"http://{config.gateway.host}:{config.gateway.internal_port}",
-                "ARKITEKT_NETWORK": config.internal_network,
-                "INSTANCE_ID": config.deployer.instance_id,
-            },
-        }
+        for org in config.organizations:
+            token = secrets.token_hex(16)
 
-        redeem_tokens.append(
-            RedeemTokenConfig(
-                token=config.deployer.redeem_token, user=config.deployer.user
-            )
-        )
+            services[config.deployer.host + org.name] = {
+                "image": config.deployer.image,
+                "volumes": ["/var/run/docker.sock:/var/run/docker.sock"],
+                "command": (
+                    f"arkitekt-next run prod --redeem-token={token} "
+                    f"--url http://{config.gateway.host}:{config.gateway.internal_port}"
+                ),
+                "deploy": {
+                    "restart_policy": {
+                        "condition": "on-failure",
+                        "delay": "10s",
+                        "max_attempts": 10,
+                        "window": "300s",
+                    }
+                },
+                "environment": {
+                    "ARKITEKT_GATEWAY": f"http://{config.gateway.host}:{config.gateway.internal_port}",
+                    "ARKITEKT_NETWORK": config.internal_network,
+                    "INSTANCE_ID": "default",
+                    "DEPLOYER_ORGANIZATION": org.name,
+                },
+            }
+
+            redeem_tokens.append(RedeemTokenConfig(token=token, user=org.bot_name))
 
     # Configure individual Arkitekt services
     if config.fluss.enabled:
@@ -644,9 +642,9 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
         )
 
     # Configure Caddy reverse proxy/gateway
-    services["caddy"] = {
-        "image": "caddy:latest",
-        "ports": ["80:80"],
+    services[config.gateway.host] = {
+        "image": config.gateway.image,
+        "ports": ["80:80", "443:443"],
         "networks": [config.internal_network, "default"],
         "volumes": ["./configs/Caddyfile:/etc/caddy/Caddyfile"],
     }
@@ -662,6 +660,9 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
         "command": config.lok.build_run_command(),
         "image": config.lok.image,
         "volumes": [f"./configs/{config.lok.host}.yaml:/workspace/config.yaml"],
+        "environment": {
+            "AUTHLIB_INSECURE_TRANSPORT": "true",
+        },
         "deploy": {
             "restart_policy": {
                 "condition": "on-failure",
@@ -687,26 +688,6 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
     )
 
     gconfig = create_basic_config_values(config, config.lok)
-
-    users = []
-    groups = []
-
-    for user in config.users:
-        users.append(
-            {
-                "username": user.username,
-                "password": user.password,
-                "email": user.email,
-            }
-        )
-
-    for group in config.groups:
-        groups.append(
-            {
-                "name": group.name,
-                "description": group.description,
-            }
-        )
 
     gconfig["deployment"] = {"name": "test"}
     gconfig["email"] = {
@@ -734,8 +715,10 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
         "write": "A generic write access",
     }
     gconfig["token_expire_seconds"] = 800000
-    gconfig["users"] = users
-    gconfig["groups"] = groups
+    gconfig["organizations"] = [org.model_dump() for org in config.organizations]
+    print(config.users)
+    gconfig["users"] = [user.model_dump() for user in config.users]
+    gconfig["roles"] = [role.model_dump() for role in config.roles]
     gconfig["instances"] = [instance.model_dump() for instance in instances]
 
     create_config(config.lok.host, gconfig, tmpdir)

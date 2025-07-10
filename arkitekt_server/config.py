@@ -8,7 +8,7 @@ import yaml
 from cryptography.hazmat.backends import default_backend as crypto_default_backend
 from cryptography.hazmat.primitives import serialization as crypto_serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 import secrets
 
 
@@ -248,6 +248,7 @@ class BaseServiceConfig(BaseModel):
         default=80,
         description="Internal port for the service. This is used to route requests to the service",
     )
+
     mount_github: bool = Field(
         default=False, description="Mount GitHub repository for the service"
     )
@@ -811,19 +812,75 @@ class User(BaseModel):
         default=None,
         description="Email for the user. If not provided, the user will not have an email",
     )
-    groups: list[str] = Field(
+    roles: list[str] = Field(
         default_factory=lambda: [],
         description="List of groups for the user. This is used to manage user permissions and access",
     )
+    active_organization: str = Field(
+        default="arkitektio",
+        description="Organization for the user. This is used to identify the organization that the user belongs to",
+    )
+
+    model_config = ConfigDict(
+        extra="forbid",
+    )
 
 
-class Group(BaseModel):
+class Role(BaseModel):
     name: str = Field(
         description="Name of the group. If not provided, a random name will be generated",
     )
     description: str | None = Field(
         default=None,
         description="Description of the group. This is used to provide additional information about the group",
+    )
+    organization: str = Field(
+        default="arkitektio",
+        description="Organization for the group. This is used to identify the organization that the group belongs to",
+    )
+    identifier: str = Field(
+        default_factory=generate_name,
+        description="Identifier for the group. This is used to uniquely identify the group within the organization",
+    )
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+
+
+class Organization(BaseModel):
+    name: str = Field(
+        default_factory=generate_name,
+        description="Name of the organization. If not provided, a random name will be generated",
+    )
+    description: str | None = Field(
+        default=None,
+        description="Description of the organization. This is used to provide additional information about the organization",
+    )
+    identifier: str = Field(
+        default_factory=generate_name,
+        description="Identifier for the organization. This is used to uniquely identify the organization",
+    )
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+
+    @property
+    def bot_name(self) -> str:
+        """
+        Get the bot name for the organization.
+        This is used to generate a unique name for the bot associated with the organization.
+        """
+        return f"{self.name}_bot"
+
+
+def create_default_orgnization() -> Organization:
+    """
+    Create a default organization for the Arkitekt server.
+    This is used to create a default organization that will be used by the Arkitekt server.
+    """
+    return Organization(
+        name="arkitektio",
+        description="Default organization for the Arkitekt server",
     )
 
 
@@ -835,9 +892,15 @@ class EmailConfig(BaseModel):
     email: str = Field(
         description="Email address to use as the sender for emails sent by the Arkitekt server"
     )
+    model_config = ConfigDict(
+        extra="forbid",
+    )
 
 
 class ArkitektServerConfig(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
     port: int = Field(default=80, description="Port for http server")
     domain: str | None = Field(
         default=None,
@@ -851,6 +914,14 @@ class ArkitektServerConfig(BaseModel):
         default=None,
         description="Email configuration for the Arkitekt server. This is used to send emails from the Arkitekt server",
     )
+    global_organization: str = Field(
+        default="arkitektio",
+        description="Global organization for the Arkitekt server. This is used to identify the organization that the Arkitekt server belongs to",
+    )
+    global_description: str | None = Field(
+        default=None,
+        description="Global description for the Arkitekt server. This is used to provide additional information about the Arkitekt server",
+    )
 
     gateway: GatewayConfig = Field(
         default_factory=GatewayConfig,
@@ -860,12 +931,16 @@ class ArkitektServerConfig(BaseModel):
         default=None,
         description="List of trusted origins for CSRF protection. This is used to prevent CSRF attacks by allowing only requests from trusted origins",
     )
+    organizations: list[Organization] = Field(
+        default_factory=lambda: [create_default_orgnization()],
+        description="List of organizations for the Arkitekt server. This is used to manage organizations in the Arkitekt server",
+    )
 
     users: list[User] = Field(
         default_factory=lambda: [],
         description="List of users for the Arkitekt server. This is used to manage users in the Arkitekt server",
     )
-    groups: list[Group] = Field(
+    roles: list[Role] = Field(
         default_factory=lambda: [],
         description="List of groups for the Arkitekt server. This is used to manage users in the Arkitekt server",
     )

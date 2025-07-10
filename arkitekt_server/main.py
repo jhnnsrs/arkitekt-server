@@ -1,7 +1,8 @@
 import subprocess
 from pathlib import Path
 import sys
-import click
+import inquirer
+import rich_click as click
 from pydantic import BaseModel, Field
 import yaml
 from cryptography.hazmat.primitives import serialization as crypto_serialization
@@ -13,20 +14,21 @@ from arkitekt_server.config import (
     BaseServiceConfig,
     RekuestConfig,
     KeyPair,
+    EmailConfig,
     User,
 )
 from typer.core import TyperGroup
 from arkitekt_server.diff import run_dry_run_diff
+from arkitekt_server.config import generate_name, Organization
+from rich.console import Console
+from rich.panel import Panel
+from rich.text import Text
+from rich.markdown import Markdown
+from .logo import ASCI_LOGO
+from arkitekt_server.wizard import prompt_config
 
-ASCI_LOGO = r"""
- █████╗ ██████╗ ██╗  ██╗██╗████████╗███████╗██╗  ██╗████████╗
-██╔══██╗██╔══██╗██║ ██╔╝██║╚══██╔══╝██╔════╝██║ ██╔╝╚══██╔══╝
-███████║██████╔╝█████╔╝ ██║   ██║   █████╗  █████╔╝    ██║   
-██╔══██║██╔══██╗██╔═██╗ ██║   ██║   ██╔══╝  ██╔═██╗    ██║   
-██║  ██║██║  ██║██║  ██╗██║   ██║   ███████╗██║  ██╗   ██║   
-╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝   ╚═╝   
-"""
 
+console = Console()
 
 app = typer.Typer(
     rich_markup_mode="rich",
@@ -109,10 +111,9 @@ def load_or_create_yaml_file(file_path: str) -> ArkitektServerConfig:
             data = yaml.safe_load(f)
             return ArkitektServerConfig(**data["config"])
     except FileNotFoundError:
-        # If the file does not exist, create a new one with default values
-        default_config = ArkitektServerConfig()
-        update_or_create_yaml_file(file_path, default_config)
-        return default_config
+        raise FileNotFoundError(
+            f"Configuration file '{file_path}' not found. Please run 'arkitekt init' to create a new configuration."
+        )
 
 
 def load_yaml_file(file_path: str) -> ArkitektServerConfig:
@@ -164,7 +165,7 @@ def default():
     """
 
     # Create a default configuration file if it doesn't exist
-    config = ArkitektServerConfig()
+    config = prompt_config(console)
 
     print("Creating default configuration file for Arkitekt server...")
     update_or_create_yaml_file("arkitekt_server_config.yaml", config)
@@ -184,7 +185,7 @@ def dev():
     """
 
     # Create a default configuration file if it doesn't exist
-    config = ArkitektServerConfig()
+    config = prompt_config(console)
 
     config.rekuest.mount_github = True
     config.kabinet.mount_github = True
@@ -205,6 +206,23 @@ def admin():
     config = load_or_create_yaml_file("arkitekt_server_config.yaml")
 
     show_important_information(config)
+
+
+@inspect_app.command()
+def users():
+    """Show the configured users in the Arkitekt server."""
+
+    config = load_or_create_yaml_file("arkitekt_server_config.yaml")
+
+    for user in config.users:
+        print(f"Username: {user.username}")
+        print(f"Email: {user.email}")
+        print(
+            f"Password: {user.password}"
+        )  # Note: In a real application, never print passwords
+        print(f"Active Organization: {user.active_organization}")
+        print(f"Roles: {', '.join(user.roles)}")
+        print("-" * 40)
 
 
 @init_app.command()

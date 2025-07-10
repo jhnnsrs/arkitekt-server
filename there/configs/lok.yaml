@@ -1,0 +1,193 @@
+csrf_trusted_origins: []
+db:
+  db_name: lok
+  engine: django.db.backends.postgresql
+  host: db
+  password: 30ae0f6d873a75e6ca8d25f98033f849
+  port: 5432
+  username: sleepyviolettarsier
+deployment:
+  name: test
+django:
+  admin:
+    email: null
+    password: sdf
+    username: admin
+  debug: false
+  hosts:
+  - '*'
+  secret_key: _p+_-9kfjvgk7-_%x4@xf(mji@pk6q^+%0o9l-7oq_e92v)j0i
+email:
+  email: NOT_SET
+  host: NOT_SET
+  password: NOT_SET
+  port: 587
+  user: NOT_SET
+force_script_name: lok
+instances:
+- aliases:
+  - challenge: ht
+    kind: relative
+    layer: public
+    path: fluss
+  identifier: fluss
+  service: live.arkitekt.fluss
+- aliases:
+  - challenge: ht
+    kind: relative
+    layer: public
+    path: fluss
+  identifier: fluss
+  service: live.arkitekt.fluss
+- aliases:
+  - challenge: ht
+    kind: relative
+    layer: public
+    path: kabinet
+  identifier: kabinet
+  service: live.arkitekt.kabinet
+- aliases:
+  - challenge: ht
+    kind: relative
+    layer: public
+    path: kraph
+  identifier: kraph
+  service: live.arkitekt.kraph
+- aliases:
+  - challenge: ht
+    kind: relative
+    layer: public
+    path: mikro
+  identifier: mikro
+  service: live.arkitekt.mikro
+- aliases:
+  - challenge: ht
+    kind: relative
+    layer: public
+    path: rekuest
+  identifier: rekuest
+  service: live.arkitekt.rekuest
+- aliases:
+  - challenge: ht
+    kind: relative
+    layer: public
+    path: lok
+  identifier: lok
+  service: live.arkitekt.lok
+- aliases:
+  - challenge: minio/health/live
+    kind: relative
+    layer: public
+    path: null
+  identifier: minio
+  service: live.arkitekt.s3
+layers:
+- identifier: public
+  kind: public
+lok:
+  issuer: lok
+  key_type: RSA256
+  public_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC8k1ZePcYUf6fPWhGOp5hz8Mpfuks7GtVugrWdUmC2LWDCHeLfnVpR3po07hKDKIOcTFgN7MmxOxPrNKNsj2SN26d3Pbr8UFUdOHG0xaV5XtcVac+FPGnxJ9zYA8UbXTKpRLYkTzsTbUKlBqEiEWCNfXnhRQs3xi5xT6A/SMkRxjMTh2+hx0Gc9mixPxgEGaxR1HXzneXB9IPhlQwZ8ZBtNaIKAweGnvYrzR2GDjSDphHKHyz+yBUt27xjUeR9lMy+I1VxRSfzfkwc2jVs2ZnSqKg/LYaV87DU8Y/SRhv1V2fi+2+EnXABbZStrpLupOBx3vmo6SuylnegaeuSajBV
+organizations:
+- description: This is the global organization for the Arkitekt server.
+  identifier: global
+  name: global
+private_key: '-----BEGIN PRIVATE KEY-----
+
+  MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC8k1ZePcYUf6fP
+
+  WhGOp5hz8Mpfuks7GtVugrWdUmC2LWDCHeLfnVpR3po07hKDKIOcTFgN7MmxOxPr
+
+  NKNsj2SN26d3Pbr8UFUdOHG0xaV5XtcVac+FPGnxJ9zYA8UbXTKpRLYkTzsTbUKl
+
+  BqEiEWCNfXnhRQs3xi5xT6A/SMkRxjMTh2+hx0Gc9mixPxgEGaxR1HXzneXB9IPh
+
+  lQwZ8ZBtNaIKAweGnvYrzR2GDjSDphHKHyz+yBUt27xjUeR9lMy+I1VxRSfzfkwc
+
+  2jVs2ZnSqKg/LYaV87DU8Y/SRhv1V2fi+2+EnXABbZStrpLupOBx3vmo6Suylneg
+
+  aeuSajBVAgMBAAECggEADnteMaSa1q4rDACFwqfaTGUclZdv+Z0I8RC2s9tEtBju
+
+  ClpTNwsViZ4Hx7LU1x/AY7t1M7SQlLzNvc1wE4E7nq1UwhKKjp/4uWLBULmxCI4h
+
+  BHL4zemi1TNTgX9gnsZcgqVVO5qeFdLZQGUu8LfW62bMemFcCC9/F5Ke4t1LG8Mz
+
+  yjpxhVfiIUeG/97Cd6IoYP/+qnOkp2IevJ68CyI2PnnfUCex2T4+irfYZpXoNtIX
+
+  UMpYhAe1eSp3SL/uaW+1p/APSLQWPxjb/mauGxqnvxNSnfDdoLPApmRu/V3Zblt7
+
+  GnV4TGLPKwUW4zBCRZt4yGeNTnSusPeUGZ7fVm8ewQKBgQD83Ied8bmP6H+N1RSj
+
+  dcMvf5A1r71ADq4Ba60dbB2XL7TPet48oa5/EnP8voW4KEYpzUWNQwOc4LFVYuxH
+
+  udbC8ZH+1ig2ERbj+5x0BEPxOf3H3ORD1K7whIpTyF6Z6ipRbr9eksLA4g9f1LK2
+
+  UTrWizawsU08pFa3NSczki2tsQKBgQC+6onToaNqIW7a5ALdnyRiuE6K6UXClwGi
+
+  HINxDQhyQySqyCmF0uC1TtZznY3wPVljfgMDDWSqtt1e9Dq5vRKr+O+UHOZeuYDv
+
+  nnxX+lKtizxdMQZlal986VkTJ2nvMBurLy7AiR6CRNeFwjBumiwD58JkoxK+zaM9
+
+  IMvz50oh5QKBgQDL2XWzjUZNj+AVFa0Xwj5isnIt9cmaNLtvBcGAMMMCOUGI6sLz
+
+  Gl00sEm1flsLBdzaolPp+BaXiEUuUxutD1Llwh4y1a+BNvG/Rf7xQOcNN/UyBRA4
+
+  5uNJn3Bs7uHlL3SCRcgdlC9RlG1UkoKonH/UqlKiy606sDoAZOd/md8dYQKBgCrs
+
+  ssZpbkN7duAyKc7IbDbh947V+gBRUWWwgYEWjBKctA7N6EAVdL5vFlpyTyp3sLRk
+
+  7apvBXY4nTcvNFD0iNEvrDYh9U3Q6YN2n8BsINCyIIVXc3ez3fpIwOVElFXZ/C6V
+
+  8i4J5lklv0tsqNUFRuYt4pAb9if+NjiVOiYBl7JdAoGBANcKXmt0XYhU1LOFnQBW
+
+  epii0E6TVYcoKpVM5EKADcMXVIYi+HlMIWfFsjmgbXrRAM/vegS/vd28vj9DjMls
+
+  Yaq+h9MX3yWEQjMv66Iq5y1jjVmaRsM24y/gVjM7nc4UjmrUPscuqHcV7FYpcCLD
+
+  ETIs7qkzkK46szXA2hZfhbgz
+
+  -----END PRIVATE KEY-----
+
+  '
+public_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC8k1ZePcYUf6fPWhGOp5hz8Mpfuks7GtVugrWdUmC2LWDCHeLfnVpR3po07hKDKIOcTFgN7MmxOxPrNKNsj2SN26d3Pbr8UFUdOHG0xaV5XtcVac+FPGnxJ9zYA8UbXTKpRLYkTzsTbUKlBqEiEWCNfXnhRQs3xi5xT6A/SMkRxjMTh2+hx0Gc9mixPxgEGaxR1HXzneXB9IPhlQwZ8ZBtNaIKAweGnvYrzR2GDjSDphHKHyz+yBUt27xjUeR9lMy+I1VxRSfzfkwc2jVs2ZnSqKg/LYaV87DU8Y/SRhv1V2fi+2+EnXABbZStrpLupOBx3vmo6SuylnegaeuSajBV
+redeem_tokens:
+- token: ecf783cede899394c343f4a561554893
+  user: global_bot
+redis:
+  host: redis
+  port: 6379
+roles: []
+s3:
+  access_key: 0guum8kdxfho2erjb1chi6tot2o9qagzrotc9y0u
+  buckets:
+    media: wiggy-zucchini-coyote
+  host: minio
+  port: 9000
+  protocol: http
+  secret_key: m70nvh278sxd1acrnfpzf72xirle8yglhl9blyw9
+scopes:
+  kabinet_add_repo: Add repositories to the database
+  kabinet_deploy: Deploy containers
+  mikro_read: Read image from the database
+  mikro_write: Write image to the database
+  openid: The open id connect scope
+  read: A generic read access
+  read_image: Read image from the database
+  rekuest_agent: Act as an agent
+  rekuest_call: Call other apps with rekuest
+  write: A generic write access
+token_expire_seconds: 800000
+users:
+- active_organization: global
+  email: sdf
+  password: sdf
+  roles:
+  - global:admin
+  - global:user
+  username: sdf
+- active_organization: global
+  email: null
+  password: bfzapseu4c4u
+  roles:
+  - global:bot
+  username: global_bot
