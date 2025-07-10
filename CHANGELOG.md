@@ -1,8 +1,20 @@
-
 # CHANGELOG
 
 
+## v1.0.0 (2025-07-10)
+
+### Bug Fixes
+
+- Remove broken test
+  ([`6e07836`](https://github.com/arkitektio/arkitekt-server/commit/6e07836195b4e80c301464e2bd9f5eef2679690f))
+
+
 ## v0.2.0 (2025-07-10)
+
+### Features
+
+- Should be working now
+  ([`1afd3f9`](https://github.com/arkitektio/arkitekt-server/commit/1afd3f9607eab7bbe11a9bb5358d958ad2cbcb2b))
 
 
 ## v0.1.4 (2025-07-04)
