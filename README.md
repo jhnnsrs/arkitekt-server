@@ -18,7 +18,43 @@ Arkitekt Server is a deployment configuration management tool that simplifies th
 uvx arkitekt-server init default
 ```
 
-This command initializes a new Arkitekt Server deployment with a default configuration. You can also specify different configurations such as `dev` for development mode or `minimal` for a lightweight setup.
+This command initializes a new Arkitekt Server deployment configuration and will guide your with a wizard for some basic configuration options.
+You can also specify different configurations such as `dev` for development mode or `minimal` for a lightweight setup.
+
+```bash
+uvx arkitekt-server build docker
+```
+
+This command generates the necessary Docker Compose files and directory based on your configuration.
+Run this command after modifying your configuration or when you want to deploy the services.
+
+```bash
+uvx arkitekt-server update
+```
+
+Especially useful whe you are on the development branch, this command updates the Docker images and configurations to the latest versions.
+
+```bash
+uvx arkitekt-server start
+```
+
+And lets go! This command starts all the services defined in the generated Docker Compose files. 
+
+
+What a while wait for the services to be up and running, and then you can access the deployment through the Arkitekt Orkestrator interface.
+Thats it! You now have a fully functional Arkitekt Server deployment.
+
+## Oh my god, I forgot all of my passwords!
+
+If you forget your preconfiugred user passwords, you can reset them by running:
+
+```bash
+uvx arkitekt-server inspect users
+```
+
+This command will list all users and their roles, that you have configured previously.
+Of course you would never use this in production, but it is a useful command for development and testing purposes.
+
 
 ### Non-UVX Usage
 
