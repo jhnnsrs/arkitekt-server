@@ -923,7 +923,7 @@ def create_default_users() -> list[User]:
     return [
         User(
             username="demo",
-            password=generate_alpha_numeric_string(),
+            password="demo",
             memberships=[
                 Membership(
                     organization="arkitektio",
