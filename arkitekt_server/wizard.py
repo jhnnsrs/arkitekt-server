@@ -7,7 +7,7 @@ import click
 import inquirer
 from .utils import safe_org_slug
 from .logo import ASCI_LOGO
-from .config import ArkitektServerConfig, Organization, EmailConfig, User
+from .config import ArkitektServerConfig, Organization, EmailConfig, User, Membership
 from .config import generate_name, generate_alpha_numeric_string
 
 console = Console()
@@ -90,7 +90,7 @@ You can define custom organizations here, or use a single global organization.
         )
     )
 
-    organizations = []
+    organizations: list[Organization] = []
 
     if click.confirm("Would you like to define custom organizations?", default=True):
         while True:
@@ -99,25 +99,26 @@ You can define custom organizations here, or use a single global organization.
                 default=generate_name(),
             )
 
-            okay_slug = False
+            org_slug = None
 
-            while not okay_slug:
+            while org_slug is None:
                 org_slug = click.prompt(
                     "Enter the organization slug (max 8 characters)",
                     default=safe_org_slug(org_name.lower()),
                 )
-                if len(org_slug) <= 8:
-                    if org_slug.isalnum() and org_slug.islower():
-                        okay_slug = True
-
-                else:
+                if len(org_slug) > 12:
+                    org_slug = None
                     console.print(
-                        "[bold red]⚠️ Organization slug must be max 8 characters.[/bold red]"
+                        "[bold red]⚠️ Organization slug must be max 12 characters.[/bold red]"
                     )
+                    continue
 
-            console.print(
-                "[bold red]⚠️ Organization name must be slug-safe and max 8 characters.[/bold red]"
-            )
+                if org_slug != safe_org_slug(org_slug):
+                    org_slug = None
+                    console.print(
+                        "[bold red]⚠️ Organization slug must be alphanumeric and _[/bold red]"
+                    )
+                    continue
 
             org_description = click.prompt(
                 "Enter a short description",
@@ -204,62 +205,92 @@ background processes. This user will have the `bot` role in all organizations.
         email = click.prompt("Enter the email (optional)", default="")
 
         # Select organization
-        org_choice = inquirer.prompt(
+        org_choice: dict[str, list[str]] = inquirer.prompt(  # type: ignore
+            [
+                inquirer.Checkbox(
+                    "organizations",
+                    message="Select the organizations this user belongs to",
+                    choices=[o.name for o in config.organizations],
+                    default=[[o.name for o in config.organizations][0]],
+                )
+            ]
+        )
+        if not org_choice:
+            console.print(
+                "[bold red]⚠️ No organization selected, please select at least one organization.[/bold red]"
+            )
+            continue
+
+        org_choices: list[str] = org_choice.get("organizations", []) or []
+        if not org_choices:
+            console.print(
+                "[bold red]⚠️ No organization selected, please select at least one organization.[/bold red]"
+            )
+            continue
+
+        memberships: list[Membership] = []
+
+        for org in org_choices:
+            memberships.append(Membership(organization=org, roles=[]))
+            roles: list[str] = []
+
+            while not roles:
+                role_choices = [
+                    slug for slug in ["admin", "user", "bot", "viewer", "editor"]
+                ]
+
+                # Select roles
+                inquisition: dict[str, list[str]] = inquirer.prompt(  # type: ignore
+                    [
+                        inquirer.Checkbox(
+                            "roles",
+                            message=f"Select the roles for this user within the {org} organization",
+                            choices=role_choices,
+                            default=[role_choices[0]],
+                        )
+                    ]
+                )
+
+                roles: list[str] = inquisition.get("roles", [])
+                if not roles:
+                    console.print(
+                        "[bold red]⚠️ No roles selected, please select at least one role.[/bold red]"
+                    )
+                    continue
+
+            memberships.append(
+                Membership(
+                    organization=org,
+                    roles=roles,
+                )
+            )
+
+        # Select organization
+        org_choice: dict[str, str] = inquirer.prompt(  # type: ignore
             [
                 inquirer.List(
                     "organization",
-                    message="Select the organization this user belongs to",
-                    choices=[o.name for o in config.organizations],
+                    message="Select the active organization for this user",
+                    choices=[o for o in org_choices],
+                    default=[o for o in org_choices][0],
                 )
             ]
         )
-
-        org_slug = org_choice["organization"]
-
-        role_choies = [f"{org_slug}:{slug}" for slug in ["admin", "user"]]
-
-        # Select roles
-        role_choice = inquirer.prompt(
-            [
-                inquirer.Checkbox(
-                    "roles",
-                    message="Select the roles for this user",
-                    choices=role_choies,
-                    default=role_choies,
-                )
-            ]
-        )
-
-        if not role_choice or "roles" not in role_choice:
-            console.print(
-                "[bold yellow]⚠️ No roles selected, defaulting to 'user'.[/bold yellow]"
-            )
-            role_choice = {"roles": ["user"]}
 
         config.users.append(
             User(
                 username=username,
                 password=password,
                 email=email or None,
-                active_organization=org_slug,
-                roles=role_choice["roles"],
+                active_organization=org_choice.get("organization", org_choices[0]),
+                memberships=memberships,
             )
         )
+
+        print("Added user:", username)
 
         if not click.confirm("Add another user?", default=False):
             break
-
-    for org in config.organizations:
-        # Add a bot user for each organization
-        config.users.append(
-            User(
-                username=org.bot_name,
-                password=generate_alpha_numeric_string(12),
-                email=None,
-                active_organization=org.name,
-                roles=[f"{org.name}:bot"],
-            )
-        )
 
     # Final message
     console.print(

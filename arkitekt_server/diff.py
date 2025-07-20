@@ -10,6 +10,7 @@ from .config import (
     ArkitektServerConfig,
     BaseService,
     LocalDBConfig,
+    Membership,
     RemoteDBConfig,
     GlobalAdminConfig,
     SpecificAdminConfig,
@@ -17,6 +18,8 @@ from .config import (
     LocalBucketConfig,
     LocalAuthConfig,
     RemoteRedisConfig,
+    User,
+    generate_alpha_numeric_string,
 )
 import yaml
 
@@ -188,6 +191,7 @@ def build_default_service(
         "image": service.image,
         "command": service.build_run_command(),
         "depends_on": ["redis", "db", "minio"],
+        "stop_grace_period": "2s",
         "volumes": [f"./configs/{service.host}.yaml:/workspace/config.yaml"],
     }
 
@@ -232,14 +236,14 @@ def parse_local_db_requests(config: ArkitektServerConfig) -> list[LocalDBConfig]
     Returns:
         A list of LocalDBConfig objects for all services requiring local databases
     """
-    db_names = []
+    db_names: list[LocalDBConfig] = []
     for service in iterate_service(config):
         if isinstance(service.db_config, LocalDBConfig):
             db_names.append(service.db_config)
     return db_names
 
 
-def parse_local_auth_requests(config: ArkitektServerConfig) -> list[LocalAuthConfig]:
+def parse_local_auth_requests(config: ArkitektServerConfig) -> list[LocalDBConfig]:
     """
     Parse and collect all local authentication configuration requests.
 
@@ -252,7 +256,7 @@ def parse_local_auth_requests(config: ArkitektServerConfig) -> list[LocalAuthCon
     Returns:
         A list of LocalAuthConfig objects (currently returns LocalDBConfig due to bug)
     """
-    db_names = []
+    db_names: list[LocalDBConfig] = []
     for service in iterate_service(config):
         if isinstance(service.db_config, LocalDBConfig):
             db_names.append(service.db_config)
@@ -273,7 +277,7 @@ def parse_local_redis_request(config: ArkitektServerConfig) -> list[LocalRedisCo
     Returns:
         A list of LocalRedisConfig objects for all services requiring local Redis
     """
-    redis_dbs = []
+    redis_dbs: list[LocalRedisConfig] = []
     for service in iterate_service(config):
         if isinstance(service.redis_config, LocalRedisConfig):
             redis_dbs.append(service.redis_config)
@@ -294,7 +298,7 @@ def parse_local_bucket_configs(config: ArkitektServerConfig) -> list[LocalBucket
     Returns:
         A list of LocalBucketConfig objects for all local buckets needed
     """
-    bucket_names = []
+    bucket_names: list[LocalBucketConfig] = []
     for service in iterate_service(config):
         buckets = service.get_buckets()
         if isinstance(buckets, dict):
@@ -432,6 +436,7 @@ class RedeemTokenConfig(BaseModel):
 
     token: str
     user: str
+    organization: str
 
 
 def service_to_instance_config(
@@ -487,7 +492,26 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
     services = {}
 
     instances: list[InstanceConfig] = []  # Service instances for Lok registration
-    redeem_tokens = []  # Authentication tokens for service access
+    redeem_tokens: list[
+        RedeemTokenConfig
+    ] = []  # Authentication tokens for service access
+
+    for org in config.organizations:
+        # Add a bot user for each organization
+        config.users.append(
+            User(
+                username=org.bot_name,
+                password=generate_alpha_numeric_string(12),
+                email=None,
+                active_organization=org.name,
+                memberships=[
+                    Membership(
+                        organization=org.identifier,
+                        roles=["bot"],
+                    )
+                ],
+            )
+        )
 
     # Configure PostgreSQL database if any services need local databases
     local_dbs = parse_local_db_requests(config)
@@ -523,11 +547,12 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
                 "MINIO_ROOT_USER": config.minio.root_user,
                 "MINIO_ROOT_PASSWORD": config.minio.root_password,
             },
+            "stop_grace_period": "2s",
             "volumes": [f"{config.minio.mount or config.minio.volume_name}:/data"],
         }
 
         # Configuration for MinIO initialization (creates buckets and users)
-        gconfig = {
+        init_config: dict[str, Any] = {
             "buckets": [{"name": req.bucket_name} for req in local_bucket_requests],
             "users": [
                 {
@@ -542,13 +567,14 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
             service_to_instance_config(config.fluss, "live.arkitekt.fluss")
         )
 
-        create_config(config.minio.init_container_host, gconfig, tmpdir)
+        create_config(config.minio.init_container_host, init_config, tmpdir)
         # MinIO initialization container that sets up buckets and users on startup
         services[config.minio.init_container_host] = {
             "image": config.minio.init_container_image,
             "volumes": [
                 f"./configs/{config.minio.init_container_host}.yaml:/workspace/config.yaml"
             ],
+            "stop_grace_period": "2s",
             "environment": {
                 "MINIO_ROOT_USER": config.minio.root_user,
                 "MINIO_ROOT_PASSWORD": config.minio.root_password,
@@ -569,6 +595,7 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
                     f"arkitekt-next run prod --redeem-token={token} "
                     f"--url http://{config.gateway.host}:{config.gateway.internal_port}"
                 ),
+                "stop_grace_period": "2s",
                 "deploy": {
                     "restart_policy": {
                         "condition": "on-failure",
@@ -585,7 +612,11 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
                 },
             }
 
-            redeem_tokens.append(RedeemTokenConfig(token=token, user=org.bot_name))
+            redeem_tokens.append(
+                RedeemTokenConfig(
+                    token=token, user=org.bot_name, organization=org.identifier
+                )
+            )
 
     # Configure individual Arkitekt services
     if config.fluss.enabled:
@@ -676,6 +707,7 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
         "environment": {
             "AUTHLIB_INSECURE_TRANSPORT": "true",
         },
+        "stop_grace_period": "2s",
         "deploy": {
             "restart_policy": {
                 "condition": "on-failure",
@@ -700,22 +732,22 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
         )
     )
 
-    gconfig = create_basic_config_values(config, config.lok)
+    lok_config = create_basic_config_values(config, config.lok)
 
-    gconfig["deployment"] = {"name": "test"}
-    gconfig["email"] = {
+    lok_config["deployment"] = {"name": "test"}
+    lok_config["email"] = {
         "host": config.email.host if config.email else "NOT_SET",
         "port": config.email.port if config.email else 587,
         "user": config.email.username if config.email else "NOT_SET",
         "password": config.email.password if config.email else "NOT_SET",
         "email": config.email.email if config.email else "NOT_SET",
     }
-    gconfig["layers"] = [{"kind": "public", "identifier": "public"}]
-    gconfig["private_key"] = config.lok.auth_key_pair.private_key
-    gconfig["public_key"] = config.lok.auth_key_pair.public_key
-    gconfig["redeem_tokens"] = [instance.model_dump() for instance in redeem_tokens]
+    lok_config["layers"] = [{"kind": "public", "identifier": "public"}]
+    lok_config["private_key"] = config.lok.auth_key_pair.private_key
+    lok_config["public_key"] = config.lok.auth_key_pair.public_key
+    lok_config["redeem_tokens"] = [instance.model_dump() for instance in redeem_tokens]
 
-    gconfig["scopes"] = {
+    lok_config["scopes"] = {
         "kabinet_add_repo": "Add repositories to the database",
         "kabinet_deploy": "Deploy containers",
         "mikro_read": "Read image from the database",
@@ -727,14 +759,13 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
         "rekuest_call": "Call other apps with rekuest",
         "write": "A generic write access",
     }
-    gconfig["token_expire_seconds"] = 800000
-    gconfig["organizations"] = [org.model_dump() for org in config.organizations]
-    print(config.users)
-    gconfig["users"] = [user.model_dump() for user in config.users]
-    gconfig["roles"] = [role.model_dump() for role in config.roles]
-    gconfig["instances"] = [instance.model_dump() for instance in instances]
+    lok_config["token_expire_seconds"] = 800000
+    lok_config["organizations"] = [org.model_dump() for org in config.organizations]
+    lok_config["users"] = [user.model_dump() for user in config.users]
+    lok_config["roles"] = [role.model_dump() for role in config.roles]
+    lok_config["instances"] = [instance.model_dump() for instance in instances]
 
-    create_config(config.lok.host, gconfig, tmpdir)
+    create_config(config.lok.host, lok_config, tmpdir)
 
     volumes: list[str] = []
     if not config.db.mount:
@@ -742,7 +773,7 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
     if not config.minio.mount:
         volumes.append(f"{config.minio.volume_name}")
 
-    docker_compose_content = {
+    docker_compose_content: Dict[str, Any] = {
         "services": services,
         "networks": {
             config.internal_network: {
@@ -756,12 +787,14 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
     (tmpdir / "docker-compose.yaml").write_text(
         yaml.dump(docker_compose_content, default_flow_style=False)
     )
-    (tmpdir / "README.md").write_text("# Example Config\nAuto-generated by script.\n")
 
 
-def collect_all_files(base: Path) -> dict:
+def collect_all_files(base: Path) -> dict[Path, Path]:
     """
     Recursively collect all files in a directory tree.
+    This function scans the specified directory and returns a dictionary
+    mapping relative file paths to their absolute Path objects. It is useful
+    for comparing directory structures or preparing for deployment.
 
     Args:
         base: The base directory to scan
@@ -769,7 +802,7 @@ def collect_all_files(base: Path) -> dict:
     Returns:
         A dictionary mapping relative paths to absolute Path objects
     """
-    files = {}
+    files: dict[Path, Path] = {}
     for path in base.rglob("*"):
         if path.is_file():
             relative_path = path.relative_to(base)

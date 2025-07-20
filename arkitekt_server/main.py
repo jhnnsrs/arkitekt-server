@@ -136,7 +136,9 @@ def show_important_information(config: ArkitektServerConfig):
 
 
 @init_app.command()
-def stable(defaults: bool = True, port: int | None = None, ssl_port: int | None = None):
+def stable(
+    defaults: bool = False, port: int | None = None, ssl_port: int | None = None
+):
     """Build commands for Arkitekt server.
 
     Creates a config that can be used to run the Arkitekt server.
@@ -159,7 +161,7 @@ def stable(defaults: bool = True, port: int | None = None, ssl_port: int | None 
 
 
 @init_app.command()
-def default(defaults: bool = True, port: int | None = None):
+def default(defaults: bool = False, port: int | None = None):
     """Build commands for Arkitekt server.
 
     Creates a config that can be used to run the Arkitekt server.
@@ -180,7 +182,7 @@ def default(defaults: bool = True, port: int | None = None):
 
 
 @init_app.command()
-def dev(defaults: bool = True, port: int | None = None):
+def dev(defaults: bool = False, port: int | None = None):
     """Build commands for Arkitekt server.
 
 
@@ -192,6 +194,8 @@ def dev(defaults: bool = True, port: int | None = None):
 
     # Create a default configuration file if it doesn't exist
     config = ArkitektServerConfig() if defaults else prompt_config(console)
+    if port is not None:
+        config.gateway.exposed_http_port = port
 
     config.rekuest.mount_github = True
     config.kabinet.mount_github = True
@@ -218,7 +222,7 @@ def admin():
 def users():
     """Show the configured users in the Arkitekt server."""
 
-    config = load_or_create_yaml_file("arkitekt_server_config.yaml")
+    config = load_yaml_file("arkitekt_server_config.yaml")
 
     for user in config.users:
         print(f"Username: {user.username}")
@@ -227,8 +231,9 @@ def users():
             f"Password: {user.password}"
         )  # Note: In a real application, never print passwords
         print(f"Active Organization: {user.active_organization}")
-        print(f"Roles: {', '.join(user.roles)}")
-        print("-" * 40)
+        for membership in user.memberships:
+            print(f"Organization: {membership.organization}")
+            print(f"Roles: {', '.join(membership.roles)}")
 
 
 @init_app.command()

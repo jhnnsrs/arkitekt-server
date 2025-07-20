@@ -823,13 +823,9 @@ class Membership(BaseModel):
     """
 
     organization: str
-    user: str = Field(
-        default_factory=generate_name,
-        description="User for the membership. If not provided, a random name will be generated",
-    )
-    role: str = Field(
-        default="member",
-        description="Role of the user in the organization. This is used to manage user permissions and access",
+    roles: list[str] = Field(
+        default=["guest"],
+        description="Roles of the user in the organization. This is used to manage user permissions and access",
     )
 
 
@@ -914,6 +910,7 @@ def create_default_organization() -> Organization:
     """
     return Organization(
         name="arkitektio",
+        identifier="arkitektio",
         description="Default organization for the Arkitekt server",
     )
 
@@ -925,8 +922,15 @@ def create_default_users() -> list[User]:
     """
     return [
         User(
-            username="admin",
+            username="demo",
             password=generate_alpha_numeric_string(),
+            memberships=[
+                Membership(
+                    organization="arkitektio",
+                    roles=["admin"],
+                ),
+            ],
+            active_organization="arkitektio",
         )
     ]
 
@@ -978,7 +982,7 @@ class ArkitektServerConfig(BaseModel):
         description="List of organizations for the Arkitekt server. This is used to manage organizations in the Arkitekt server",
     )
     users: list[User] = Field(
-        default_factory=lambda: [],
+        default_factory=lambda: create_default_users(),
         description="List of users for the Arkitekt server. This is used to manage users in the Arkitekt server",
     )
     roles: list[Role] = Field(
