@@ -39,6 +39,8 @@ include = ["arkitekt_server"]
 
 [tool.uv]
 dev-dependencies = [
+    "arkitekt-next[all]>=0.17.0",
+    "dokker>=2.2",
     "pytest-cov>=6.2.1",
     "pytest>=8.4.1",
     "python-semantic-release>=9.21.1",

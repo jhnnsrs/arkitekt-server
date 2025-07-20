@@ -136,7 +136,7 @@ def show_important_information(config: ArkitektServerConfig):
 
 
 @init_app.command()
-def stable():
+def stable(defaults: bool = True, port: int | None = None, ssl_port: int | None = None):
     """Build commands for Arkitekt server.
 
     Creates a config that can be used to run the Arkitekt server.
@@ -146,7 +146,11 @@ def stable():
     """
 
     # Create a default configuration file if it doesn't exist
-    config = ArkitektServerConfig()
+    config = ArkitektServerConfig() if defaults else prompt_config(console)
+    if port is not None:
+        config.gateway.exposed_http_port = port
+    if ssl_port is not None:
+        config.gateway.exposed_https_port = ssl_port
 
     print("Creating default configuration file for Arkitekt server...")
     update_or_create_yaml_file("arkitekt_server_config.yaml", config)
@@ -155,7 +159,7 @@ def stable():
 
 
 @init_app.command()
-def default():
+def default(defaults: bool = True, port: int | None = None):
     """Build commands for Arkitekt server.
 
     Creates a config that can be used to run the Arkitekt server.
@@ -165,7 +169,9 @@ def default():
     """
 
     # Create a default configuration file if it doesn't exist
-    config = prompt_config(console)
+    config = ArkitektServerConfig() if defaults else prompt_config(console)
+    if port is not None:
+        config.gateway.exposed_http_port = port
 
     print("Creating default configuration file for Arkitekt server...")
     update_or_create_yaml_file("arkitekt_server_config.yaml", config)
@@ -174,7 +180,7 @@ def default():
 
 
 @init_app.command()
-def dev():
+def dev(defaults: bool = True, port: int | None = None):
     """Build commands for Arkitekt server.
 
 
@@ -185,7 +191,7 @@ def dev():
     """
 
     # Create a default configuration file if it doesn't exist
-    config = prompt_config(console)
+    config = ArkitektServerConfig() if defaults else prompt_config(console)
 
     config.rekuest.mount_github = True
     config.kabinet.mount_github = True
@@ -319,17 +325,17 @@ def kabinet(enable: bool = True):
 
 
 @build_app.command()
-def docker(path: Path = Path(".")):
+def docker(path: Path = Path("."), yes: bool = False):
     """Build the Docker image for the Arkitekt server."""
 
     # load the yaml file
     config = load_or_create_yaml_file("arkitekt_server_config.yaml")
 
-    run_dry_run_diff(config, path, allow_deletes=False)
+    run_dry_run_diff(config, path, allow_deletes=False, yes=yes)
 
 
 @build_app.command()
-def kubernetes(path: Path = Path(".")):
+def kubernetes(path: Path = Path("."), yes: bool = False):
     """Build the Docker image for the Arkitekt server."""
 
     # load the yaml file

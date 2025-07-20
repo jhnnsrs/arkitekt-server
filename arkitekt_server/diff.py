@@ -67,7 +67,7 @@ def create_basic_config_values(
     Raises:
         TypeError: If the service has an unsupported database or Redis configuration type
     """
-    db = None
+    db: dict[str, str | int] = {}
     if isinstance(service.db_config, LocalDBConfig):
         db = {
             "db_name": service.db_config.db,
@@ -86,8 +86,12 @@ def create_basic_config_values(
             "port": service.db_config.port,
             "username": service.db_config.user,
         }
+    else:
+        raise TypeError(
+            f"Expected LocalDBConfig or RemoteDBConfig, got {type(service.db_config).__name__} instead."
+        )
 
-    django_admin = None
+    django_admin: dict[str, str] | None = None
     if isinstance(service.admin_config, GlobalAdminConfig):
         django_admin = {
             "email": config.global_admin_email,
@@ -100,8 +104,12 @@ def create_basic_config_values(
             "password": service.admin_config.password,
             "username": service.admin_config.username,
         }
+    else:
+        raise TypeError(
+            f"Expected GlobalAdminConfig or SpecificAdminConfig, got {type(service.admin_config).__name__} instead."
+        )
 
-    redis = None
+    redis: dict[str, str | int] | None = None
     if isinstance(service.redis_config, LocalRedisConfig):
         redis = {
             "host": config.local_redis.host,
@@ -118,7 +126,7 @@ def create_basic_config_values(
         )
 
     script_name = service.host
-    config_values = {
+    config_values: dict[str, Any] = {
         "csrf_trusted_origins": [],
         "db": db,
         "django": {
@@ -478,7 +486,7 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
 
     services = {}
 
-    instances = []  # Service instances for Lok registration
+    instances: list[InstanceConfig] = []  # Service instances for Lok registration
     redeem_tokens = []  # Authentication tokens for service access
 
     # Configure PostgreSQL database if any services need local databases
@@ -493,7 +501,9 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
                 "POSTGRES_PASSWORD": config.db.postgres_password,
                 "POSTGRES_USER": config.db.postgres_user,
             },
-            "volumes": [f"{config.db.db_mount}:/var/lib/postgresql/data"],
+            "volumes": [
+                f"{config.db.mount or config.db.volume_name}:/var/lib/postgresql/data"
+            ],
         }
 
     # Configure Redis service if any services need local Redis
@@ -513,7 +523,7 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
                 "MINIO_ROOT_USER": config.minio.root_user,
                 "MINIO_ROOT_PASSWORD": config.minio.root_password,
             },
-            "volumes": ["./data:/data"],
+            "volumes": [f"{config.minio.mount or config.minio.volume_name}:/data"],
         }
 
         # Configuration for MinIO initialization (creates buckets and users)
@@ -644,7 +654,10 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
     # Configure Caddy reverse proxy/gateway
     services[config.gateway.host] = {
         "image": config.gateway.image,
-        "ports": ["80:80", "443:443"],
+        "ports": [
+            f"{config.gateway.exposed_http_port}:80",
+            f"{config.gateway.exposed_https_port}:443",
+        ],
         "networks": [config.internal_network, "default"],
         "volumes": ["./configs/Caddyfile:/etc/caddy/Caddyfile"],
     }
@@ -723,6 +736,12 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
 
     create_config(config.lok.host, gconfig, tmpdir)
 
+    volumes: list[str] = []
+    if not config.db.mount:
+        volumes.append(f"{config.db.volume_name}")
+    if not config.minio.mount:
+        volumes.append(f"{config.minio.volume_name}")
+
     docker_compose_content = {
         "services": services,
         "networks": {
@@ -731,6 +750,7 @@ def write_virtual_config_files(tmpdir: Path, config: ArkitektServerConfig):
                 "name": config.internal_network,
             }
         },
+        "volumes": {vol: {} for vol in volumes},
     }
 
     (tmpdir / "docker-compose.yaml").write_text(
@@ -810,7 +830,10 @@ def compare_filesystems(
 
 
 def run_dry_run_diff(
-    config: ArkitektServerConfig, real_dir: Path, allow_deletes: bool = False
+    config: ArkitektServerConfig,
+    real_dir: Path,
+    allow_deletes: bool = False,
+    yes: bool = False,
 ):
     """
     Execute a dry-run comparison and optionally apply changes.
@@ -842,10 +865,11 @@ def run_dry_run_diff(
         print(f"\n🔍 Comparing to real directory: {real_dir}\n")
         compare_filesystems(virtual_dir, real_dir, allow_deletes=allow_deletes)
 
-        typer.confirm(
-            "Do you want to apply these changes?",
-            abort=True,
-        )
+        if not yes:
+            typer.confirm(
+                "Do you want to apply these changes?",
+                abort=True,
+            )
 
         # copy the virtual files to the real directory
         for path in virtual_dir.rglob("*"):

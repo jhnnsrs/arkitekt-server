@@ -450,6 +450,14 @@ class MinioConfig(BaseModel):
         default="minio/minio:RELEASE.2025-02-18T16-25-55Z",
         description="Docker image for the MinIO service. This is used to run the MinIO server",
     )
+    mount: str | None = Field(
+        default="/data",
+        description="Mount point for MinIO data storage in the Arkitekt server (used for file storage). If None, a volume will be created.",
+    )
+    volume_name: str = Field(
+        default="minio_data",
+        description="Name of the volume for MinIO data storage in the Arkitekt server",
+    )
 
 
 class KabinetConfig(BaseServiceConfig):
@@ -721,10 +729,11 @@ class DatenConfig(BaseServiceConfig):
         default="https://github.com/arkitektio/daten-server",
         description="GitHub repository URL for the Lok service",
     )
-    db_mount: str | None = Field(
+    mount: str | None = Field(
         default="./db_data",
         description="Mount point for PostgreSQL database storage in the Daten service. If None, a volume will be created.",
     )
+    volume_name: str = "db_data"
 
 
 class DeployerConfig(BaseServiceConfig):
@@ -790,6 +799,14 @@ class GatewayConfig(BaseServiceConfig):
         default=True,
         description="Whether to automatically force HTTPS for the Arkitekt server. If True, the server will redirect HTTP requests to HTTPS",
     )
+    exposed_http_port: int = Field(
+        default=80,
+        description="Port for the HTTP server. This is used to expose the HTTP server to the outside world",
+    )
+    exposed_https_port: int = Field(
+        default=443,
+        description="Port for the HTTPS server. This is used to expose the HTTPS server to the outside world",
+    )
 
     def get_gateway_path(self, service: BaseService) -> str:
         """
@@ -797,6 +814,23 @@ class GatewayConfig(BaseServiceConfig):
         This is used to configure the path for the service in the Gateway.
         """
         return service.host
+
+
+class Membership(BaseModel):
+    """
+    Membership model to represent the relationship between a user and an organization.
+    This is used to manage user memberships in different organizations.
+    """
+
+    organization: str
+    user: str = Field(
+        default_factory=generate_name,
+        description="User for the membership. If not provided, a random name will be generated",
+    )
+    role: str = Field(
+        default="member",
+        description="Role of the user in the organization. This is used to manage user permissions and access",
+    )
 
 
 class User(BaseModel):
@@ -812,12 +846,12 @@ class User(BaseModel):
         default=None,
         description="Email for the user. If not provided, the user will not have an email",
     )
-    roles: list[str] = Field(
+    memberships: list[Membership] = Field(
         default_factory=lambda: [],
-        description="List of groups for the user. This is used to manage user permissions and access",
+        description="List of memberships for the user. This is used to manage user memberships in different organizations",
     )
     active_organization: str = Field(
-        default="arkitektio",
+        default="default",
         description="Organization for the user. This is used to identify the organization that the user belongs to",
     )
 
@@ -873,7 +907,7 @@ class Organization(BaseModel):
         return f"{self.name}_bot"
 
 
-def create_default_orgnization() -> Organization:
+def create_default_organization() -> Organization:
     """
     Create a default organization for the Arkitekt server.
     This is used to create a default organization that will be used by the Arkitekt server.
@@ -882,6 +916,19 @@ def create_default_orgnization() -> Organization:
         name="arkitektio",
         description="Default organization for the Arkitekt server",
     )
+
+
+def create_default_users() -> list[User]:
+    """
+    Create a default user for the Arkitekt server.
+    This is used to create a default user that will be used by the Arkitekt server.
+    """
+    return [
+        User(
+            username="admin",
+            password=generate_alpha_numeric_string(),
+        )
+    ]
 
 
 class EmailConfig(BaseModel):
@@ -914,15 +961,10 @@ class ArkitektServerConfig(BaseModel):
         default=None,
         description="Email configuration for the Arkitekt server. This is used to send emails from the Arkitekt server",
     )
-    global_organization: str = Field(
-        default="arkitektio",
-        description="Global organization for the Arkitekt server. This is used to identify the organization that the Arkitekt server belongs to",
-    )
     global_description: str | None = Field(
         default=None,
         description="Global description for the Arkitekt server. This is used to provide additional information about the Arkitekt server",
     )
-
     gateway: GatewayConfig = Field(
         default_factory=GatewayConfig,
         description="Configuration for the Gateway service",
@@ -932,10 +974,9 @@ class ArkitektServerConfig(BaseModel):
         description="List of trusted origins for CSRF protection. This is used to prevent CSRF attacks by allowing only requests from trusted origins",
     )
     organizations: list[Organization] = Field(
-        default_factory=lambda: [create_default_orgnization()],
+        default_factory=lambda: [create_default_organization()],
         description="List of organizations for the Arkitekt server. This is used to manage organizations in the Arkitekt server",
     )
-
     users: list[User] = Field(
         default_factory=lambda: [],
         description="List of users for the Arkitekt server. This is used to manage users in the Arkitekt server",
@@ -944,13 +985,12 @@ class ArkitektServerConfig(BaseModel):
         default_factory=lambda: [],
         description="List of groups for the Arkitekt server. This is used to manage users in the Arkitekt server",
     )
-
     global_admin: str = Field(
         default="admin",
         description="Global admin username for the Arkitekt server",
     )
     global_admin_password: str = Field(
-        default_factory=generate_name,
+        default_factory=generate_alpha_numeric_string,
         description="Global admin password for the Arkitekt server",
     )
     global_admin_email: str | None = Field(
@@ -960,14 +1000,6 @@ class ArkitektServerConfig(BaseModel):
     deployer: DeployerConfig = Field(
         default_factory=DeployerConfig,
         description="Configuration for the Deployer service",
-    )
-    minio_mount: str | None = Field(
-        default="/data",
-        description="Mount point for MinIO data storage in the Arkitekt server (used for file storage). If None, a volume will be created.",
-    )
-    db_mount: str | None = Field(
-        default="/db_data",
-        description="Mount point for PostgreSQL database storage in the Arkitekt server. If None, a volume will be created.",
     )
     local_redis: RedisServiceConfig = Field(
         default_factory=RedisServiceConfig,
