@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v1.3.0 (2025-07-20)
+
+### Features
+
+- Fix wizard and make default configuration work
+  ([`dbdf661`](https://github.com/arkitektio/arkitekt-server/commit/dbdf661464b325e74846b19bddde2bc31b610914))
+
+
 ## v1.2.0 (2025-07-20)
 
 ### Features
