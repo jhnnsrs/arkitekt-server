@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v1.2.0 (2025-07-20)
+
+### Features
+
+- Loosen python requirements
+  ([`86c0445`](https://github.com/arkitektio/arkitekt-server/commit/86c0445b3096df402529fd621a4d717859c11fd8))
+
+
 ## v1.1.0 (2025-07-20)
 
 ### Features
