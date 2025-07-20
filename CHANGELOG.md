@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v1.1.0 (2025-07-20)
+
+### Features
+
+- Add more tests and programmatic creation
+  ([`bac3919`](https://github.com/arkitektio/arkitekt-server/commit/bac3919a0e329b6428e9b90d5e7a91b9a2ef32aa))
+
+
 ## v1.0.0 (2025-07-10)
 
 ### Bug Fixes
