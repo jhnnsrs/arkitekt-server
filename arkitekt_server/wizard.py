@@ -144,6 +144,7 @@ You can define custom organizations here, or use a single global organization.
         )
 
     config.organizations = organizations
+    config.users = []
 
     # Email support
     console.print(
@@ -210,8 +211,8 @@ background processes. This user will have the `bot` role in all organizations.
                 inquirer.Checkbox(
                     "organizations",
                     message="Select the organizations this user belongs to",
-                    choices=[o.name for o in config.organizations],
-                    default=[[o.name for o in config.organizations][0]],
+                    choices=[o.identifier for o in config.organizations],
+                    default=[[o.identifier for o in config.organizations][0]],
                 )
             ]
         )

@@ -37,7 +37,6 @@ def test_generate():
         )
 
         # Return the temporary directory path for potential further inspection
-        return temp_dir
 
 
 def test_building():
