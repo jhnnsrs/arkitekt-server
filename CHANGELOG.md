@@ -1,12 +1,18 @@
 # CHANGELOG
 
 
+## v1.5.0 (2025-07-24)
+
+
 ## v1.4.0 (2025-07-20)
 
 ### Features
 
 - Change password to demo
   ([`cae127e`](https://github.com/arkitektio/arkitekt-server/commit/cae127e6c6d18ed3b2181299bc88d6c7deeb977a))
+
+- Fix org slug
+  ([`bc952f2`](https://github.com/arkitektio/arkitekt-server/commit/bc952f26acb7f5623983f18530811092682cfa2c))
 
 
 ## v1.3.0 (2025-07-20)
